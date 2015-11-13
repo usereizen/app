@@ -99,11 +99,13 @@ abstract class WikiaBaseTest extends PHPUnit_Framework_TestCase {
 	protected function tearDown() {
 		global $wgAnnotateTestSpeed;
 
+//		var_dump('tearDown start');
 		$this->unsetGlobals();
 		$this->unsetMessages();
 		if ( $this->mockProxy === null ) {
 			throw new Exception("Current test did not execute setUp()");
 		}
+//		var_dump('tearDown mock proxy disable');
 		$this->mockProxy->disable();
 		$this->mockProxy = null;
 

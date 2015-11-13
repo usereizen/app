@@ -161,5 +161,9 @@ class WikiaMockProxyAction {
 		return end(self::$invocationStack);
 	}
 
+	public function __toString() {
+		return $this->getEventId();
+	}
+
 }
 

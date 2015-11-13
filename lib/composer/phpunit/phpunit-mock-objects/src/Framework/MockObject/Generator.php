@@ -310,6 +310,7 @@ class PHPUnit_Framework_MockObject_Generator
     protected function evalClass($code, $className)
     {
         if (!class_exists($className, FALSE)) {
+            file_put_contents('/tmp/test_code.txt',$code);
             eval($code);
         }
     }
@@ -971,6 +972,10 @@ class PHPUnit_Framework_MockObject_Generator
               '%s_method.tpl',
               $callOriginalMethods ? 'proxied' : 'mocked'
             );
+        }
+
+        if ( $methodName == '{closure}' ) {
+            return '';
         }
 
         $template = new Text_Template($templateDir . $templateFile);

@@ -144,12 +144,19 @@ class WikiaMockProxy {
 		$desiredState = $this->enabled && $action->isActive();
 
 		if ( $currentState != $desiredState ) {
-			$this->updateState($type,$id,$desiredState);
-			$this->mocks[$type][$id][self::PROP_STATE] = $desiredState;
+//			var_dump(($desiredState ? 'enable' : 'disable') . ': ' . $id);
+			try {
+				$this->updateState( $type, $id, $desiredState );
+				$this->mocks[$type][$id][self::PROP_STATE] = $desiredState;
+			} catch (Exception $e) {
+				echo $e->getMessage() . PHP_EOL;
+				echo $e->getTraceAsString() . PHP_EOL;
+			}
 		}
 	}
 
 	protected function updateState( $type, $id, $state ) {
+//		var_dump([$type, $id, $state]);
 		$parts = explode('|',$id);
 		switch ($type) {
 			case self::STATIC_METHOD:
@@ -159,12 +166,21 @@ class WikiaMockProxy {
 				$savedName = self::SAVED_PREFIX . $methodName;
 				if ( $state ) { // enable
 					is_callable( "{$className}::{$methodName}" );
-					$flags = RUNKIT_ACC_PUBLIC | ( $type == self::STATIC_METHOD ? RUNKIT_ACC_STATIC : 0);
-					runkit_method_rename( $className, $methodName, $savedName);  // save the original method
-					runkit_method_add($className, $methodName, '', $this->getExecuteCallCode($type,$id, $type === self::DYNAMIC_METHOD), $flags );
-				} else { // diable
-					runkit_method_remove($className, $methodName);  // remove the redefined instance
-					runkit_method_rename($className, $savedName, $methodName); // restore the original
+					if ( method_exists( $className, $savedName ) ) {
+						throw new Exception("Cannot override a function twice");
+					}
+					if ( method_exists( $className, $methodName ) ) {
+						uopz_rename( $className, $methodName, $savedName );  // save the original method
+					}
+					$flags = ZEND_ACC_PUBLIC | ( $type == self::STATIC_METHOD ? ZEND_ACC_STATIC : 0);
+					uopz_function($className, $methodName, $this->getExecuteClosure($type,$id, $type === self::DYNAMIC_METHOD), $flags );
+				} else { // disable
+					if ( method_exists( $className, $savedName ) ) {
+						uopz_rename( $className, $savedName, $methodName );
+						uopz_delete( $className, $savedName );
+					} else {
+						uopz_delete( $className, $methodName );
+					}
 				}
 				break;
 			case self::GLOBAL_FUNCTION:
@@ -173,13 +189,23 @@ class WikiaMockProxy {
 				$functionName = $namespace . $baseName;
 				$savedName = $namespace . self::SAVED_PREFIX . $baseName;
 				if ( $state ) { // enable
+					if ( function_exists($savedName) ) {
+						throw new Exception("Cannot override a function twice");
+					}
+					if ( function_exists($functionName) ) {
+						uopz_rename($functionName, $savedName);
+					}
 					$tempName = "WikiaMockProxyTempFuncName"; // workaround for namespaces functions
-					runkit_function_rename($functionName, $savedName);
-					runkit_function_add($tempName, '', $this->getExecuteCallCode($type,$id));
-					runkit_function_rename($tempName,$functionName);
+//					uopz_function($tempName, $this->getExecuteClosure($type,$id));
+//					uopz_rename($tempName,$functionName);
+					uopz_function($functionName, $this->getExecuteClosure($type,$id));
 				} else { // disable
-					runkit_function_remove($functionName);  // remove the redefined instance
-					runkit_function_rename($savedName, $functionName); // restore the original
+					if ( function_exists($savedName) ) {
+						uopz_rename($savedName, $functionName); // restore the original
+						uopz_delete($savedName);
+					} else {
+						uopz_delete($functionName);
+					}
 				}
 				break;
 		}
@@ -192,6 +218,10 @@ class WikiaMockProxy {
 
 		$passThisCode = $passThis ? ',$this' : '';
 		return "return WikiaMockProxy::\$instance->execute('{$type}','{$id}',func_get_args(){$passThisCode});";
+	}
+
+	protected function getExecuteClosure( $type, $id, $passThis = false ) {
+		return WikiaMockProxy_executeClosure($type, $id, $passThis);
 	}
 
 	public static function parseGlobalFunctionName( $functionName ) {
@@ -260,7 +290,8 @@ class WikiaMockProxy {
 		// enable this instance
 		self::$instance = $this;
 		$this->enabled = true;
-		set_new_overload('WikiaMockProxy::overload');
+		uopz_overload(ZEND_NEW, 'WikiaMockProxy::overload');
+//		var_dump(['uopz_overload', 'install']);
 		foreach ($this->mocks as $list1) {
 			foreach ($list1 as $type => $mock) {
 				$this->notify($mock[self::PROP_ACTION]);
@@ -275,22 +306,27 @@ class WikiaMockProxy {
 			}
 			throw new Exception("Another WikiaMockProxy is enabled now");
 		}
+//		var_dump('disable start');
 
 		// disable this instance
 		$this->enabled = false;
-		unset_new_overload();
 		foreach ($this->mocks as $list1) {
 			foreach ($list1 as $type => $mock) {
+//				var_dump('notify: ' . (string)$mock[self::PROP_ACTION]);
 				$this->notify($mock[self::PROP_ACTION]);
 			}
 		}
+		uopz_overload(ZEND_NEW, null);
+//		var_dump(['uopz_overload', 'uninstall']);
 		self::$instance = null;
+//		var_dump('disable finish');
 	}
 
 	// Because overload is called _immediately_ before the __construct function
 	// we can use a static instance to hold the instance of whatever class we are overloading
 	// We have to do this because overload returns a string with the class name and not an object (grr)
-	static public function overload($className) {
+	static public function overload(&$className) {
+//		var_dump($className);
 		/** @var $action WikiaMockProxyAction */
 		if ( self::$instance
 			&& ($action = self::$instance->retrieve(self::CLASS_CONSTRUCTOR,$className) )
@@ -299,16 +335,26 @@ class WikiaMockProxy {
 			$type = $action->getEventType();
 			$id = $action->getEventId();
 			try {
-				$value = self::$instance->execute($type,$id,array());
+				$className = self::$instance->execute($type,$id,array());
 			} catch (Exception $e) {
 				echo "WikiaMockProxy::overload: caught exception: {$e->getMessage()}\n";
 				echo $e->getTraceAsString();
 				echo "\n";
-				$value = $className;
 			}
-			return $value;
 		}
-		return $className;
 	}
 
+}
+
+
+function WikiaMockProxy_executeClosure( $type, $id, $passThis = false ) {
+	return function() use ($type, $id, $passThis) {
+		$instance = WikiaMockProxy::$instance;
+//		var_dump(['execute',$type, $id, func_get_args()]);
+		if ( $passThis ) {
+			return $instance->execute($type, $id, func_get_args(), $this );
+		} else {
+			return $instance->execute($type, $id, func_get_args() );
+		}
+	};
 }
