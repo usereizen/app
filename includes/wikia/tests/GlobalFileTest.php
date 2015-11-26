@@ -127,6 +127,11 @@ class GlobalFileTest extends WikiaBaseTest {
 			->expects( $this->any() )
 			->method( 'selectRow' )
 			->will( $this->returnCallback( function( $table, $vars, $conds, $fname ) use ($row) {
+				var_dump([
+					'conds' => $conds,
+					'fname' => $fname,
+					'row' => $row,
+				]);
 				if ( $fname == 'GlobalFile::loadData' ) {
 					if ( $conds['img_name'] == $row->img_name ) {
 						return $row;
@@ -152,7 +157,7 @@ class GlobalFileTest extends WikiaBaseTest {
 
 	public function testNewFromTextDbNameMatchProvider() {
 		return [
-			[
+			'Gzik.jpg' => [
 				'row' => (object) [
 						'img_name' => "Gzik.jpg",
 						'img_width' => '600',
@@ -163,7 +168,7 @@ class GlobalFileTest extends WikiaBaseTest {
 					],
 				'cityId' => self::POZNAN_CITY_ID,
 			],
-			[
+			'Gzik_v2.jpg' => [
 				'row' => (object) [
 						'img_name' => "Gzik_v2.jpg",
 						'img_width' => '600',

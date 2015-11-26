@@ -164,21 +164,34 @@ class WikiaMockProxy {
 				$className = $parts[1];
 				$methodName = $parts[2];
 				$savedName = self::SAVED_PREFIX . $methodName;
+				$typeText = $type === self::STATIC_METHOD ? '::' : '->';
 				if ( $state ) { // enable
+					echo "\n[MOCK   ] $className$typeText$methodName\n";
 					is_callable( "{$className}::{$methodName}" );
 					if ( method_exists( $className, $savedName ) ) {
 						throw new Exception("Cannot override a function twice");
 					}
-					if ( method_exists( $className, $methodName ) ) {
-						uopz_rename( $className, $methodName, $savedName );  // save the original method
-					}
 					$flags = ZEND_ACC_PUBLIC | ( $type == self::STATIC_METHOD ? ZEND_ACC_STATIC : 0);
-					uopz_function($className, $methodName, $this->getExecuteClosure($type,$id, $type === self::DYNAMIC_METHOD), $flags );
+					$newMethod = $this->getExecuteClosure($type,$id, $type === self::DYNAMIC_METHOD);
+					if ( method_exists( $className, $methodName ) ) {
+						echo "\n[UBACKUP] $className$typeText$methodName\n";
+						$flags = uopz_flags($className, $methodName, ZEND_ACC_FETCH);
+						uopz_function($className, $savedName, $newMethod, $flags, false);
+						uopz_rename($className, $methodName, $savedName);
+					} else {
+						uopz_function($className, $methodName, $newMethod, $flags, true);
+					}
 				} else { // disable
+					echo "\n[RESTORE] $className$typeText$methodName\n";
 					if ( method_exists( $className, $savedName ) ) {
+						echo "\n[UBACKUP] $className$typeText$methodName\n";
+						echo "\n[RESTORE] (rename) $className $savedName $methodName\n";
 						uopz_rename( $className, $savedName, $methodName );
 						uopz_delete( $className, $savedName );
+						uopz_restore( $className, $methodName );
 					} else {
+						uopz_delete
+						echo "\n[RESTORE] (delete) $className $methodName\n";
 						uopz_delete( $className, $methodName );
 					}
 				}
@@ -189,6 +202,7 @@ class WikiaMockProxy {
 				$functionName = $namespace . $baseName;
 				$savedName = $namespace . self::SAVED_PREFIX . $baseName;
 				if ( $state ) { // enable
+					echo "\n[MOCK   ] $functionName\n";
 					if ( function_exists($savedName) ) {
 						throw new Exception("Cannot override a function twice");
 					}
@@ -200,6 +214,7 @@ class WikiaMockProxy {
 //					uopz_rename($tempName,$functionName);
 					uopz_function($functionName, $this->getExecuteClosure($type,$id));
 				} else { // disable
+					echo "\n[RESTORE] $functionName\n";
 					if ( function_exists($savedName) ) {
 						uopz_rename($savedName, $functionName); // restore the original
 						uopz_delete($savedName);
@@ -221,6 +236,8 @@ class WikiaMockProxy {
 	}
 
 	protected function getExecuteClosure( $type, $id, $passThis = false ) {
+//		$code = $this->getExecuteCallCode($type, $id, $passThis);
+//		return create_function('', $code);
 		return WikiaMockProxy_executeClosure($type, $id, $passThis);
 	}
 
@@ -320,6 +337,17 @@ class WikiaMockProxy {
 //		var_dump(['uopz_overload', 'uninstall']);
 		self::$instance = null;
 //		var_dump('disable finish');
+
+		foreach ([
+					 'DatabaseBase' => 'base  ',
+					 'DatabaseMysqlBase' => 'mysqlb',
+					 'DatabaseMysqli' => 'mysqli'
+				 ] as $className => $text) {
+			$methodReflection = new ReflectionMethod( $className, 'selectRow' );
+			$status = $methodReflection->getName();
+			$flags = $methodReflection->isStatic() ? 's' : 'd';
+			echo "[DSTATUS $text] $flags $status\n";
+		}
 	}
 
 	// Because overload is called _immediately_ before the __construct function
@@ -349,6 +377,8 @@ class WikiaMockProxy {
 
 function WikiaMockProxy_executeClosure( $type, $id, $passThis = false ) {
 	return function() use ($type, $id, $passThis) {
+		echo "\n[CALL   ] $id\n";
+		debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 		$instance = WikiaMockProxy::$instance;
 //		var_dump(['execute',$type, $id, func_get_args()]);
 		if ( $passThis ) {

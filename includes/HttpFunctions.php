@@ -36,6 +36,8 @@ class Http {
 	 * @return Mixed: (bool)false on failure or a string on success or MWHttpRequest instance if returnInstance option is set
 	 */
 	public static function request( $method, $url, $options = array() ) {
+		echo "\n[CALL   ] Http::request\n";
+
 		$fname = __METHOD__ . '::' . $method;
 		wfProfileIn($fname);
 
