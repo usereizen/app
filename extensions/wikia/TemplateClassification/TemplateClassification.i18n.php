@@ -64,6 +64,7 @@ $messages['en'] = array(
 	'special-templates-portable-infobox' => 'Portable',
 	'special-templates-non-portable-infobox' => 'Non-portable',
 	'logentry-templateclassification-tc-changed' => '$1 changed type of $3 from $5 to $4.',
+	'templates' => 'Templates on wikia'
 );
 
 $messages['qqq'] = array(
@@ -128,9 +129,11 @@ $messages['qqq'] = array(
 	'special-templates-portable-infobox' => 'Inform that given infobox is portable',
 	'special-templates-non-portable-infobox' => 'Inform that given infobox is non-portable',
 	'logentry-templateclassification-tc-changed' => "A message that is saved to a user-facing log if a type of a template is changed to another one. Parameters are: $1 - User's name, $3 - A link to a target page, $4 - New type of the template, $5 - Old type of the template.",
+	'templates' => 'Describe that Special:Templates page contains templates on wikia.'
 );
 
 $messages['de'] = array(
+	'templates' => 'Vorlagen auf Wikia',
 	'template-classification-description' => 'Schnittstelle zur Klassifizierung von Vorlagen, um Inhalte besser zu verstehen.',
 	'template-classification-type-unclassified' => 'Nicht klassifiziert',
 	'template-classification-type-infobox' => 'Infobox',
@@ -196,6 +199,7 @@ $messages['de'] = array(
 );
 
 $messages['es'] = array(
+	'templates' => 'Plantillas en la wikia',
 	'template-classification-description' => 'Interfaz para clasificar plantillas para entender mejor el contenido.',
 	'template-classification-type-unclassified' => 'No clasificado',
 	'template-classification-type-infobox' => 'Infobox',
@@ -650,6 +654,7 @@ $messages['pt'] = array(
 );
 
 $messages['ru'] = array(
+	'templates' => 'Шаблоны на вики',
 	'template-classification-description' => 'Интерфейс классификации шаблонов для лучшего понимания их содержимого.',
 	'template-classification-type-unclassified' => 'Неклассифицированные',
 	'template-classification-type-infobox' => 'Инфобоксы',

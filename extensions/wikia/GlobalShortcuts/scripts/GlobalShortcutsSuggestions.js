@@ -39,7 +39,7 @@ define('GlobalShortcutsSuggestions',
 
 		GlobalShortcutsSuggestions.prototype.init = function () {
 			var autocompleteReEscape = new RegExp('(\\' + ['/', '.', '*', '+', '?', '|', '(', ')',
-					'[', ']', '{', '}', '\\'].join('|\\') + ')', 'g');
+					'[', ']', '{', '}', '\\'].join('|\\') + ')', 'gi');
 
 			this.suggestionsAsync().done(function (suggestions) {
 				this.$el.suggestionsAutocomplete({
@@ -68,7 +68,8 @@ define('GlobalShortcutsSuggestions',
 						}
 						return out;
 					}.bind(this),
-					skipBadQueries: true
+					skipBadQueries: true,
+					autoSelectFirst: true
 				});
 
 				this.$el.focus();
