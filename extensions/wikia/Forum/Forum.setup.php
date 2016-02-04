@@ -7,6 +7,8 @@
  *
  */
 
+var_dump('Loading ' .  __FILE__);
+
 $wgExtensionCredits['specialpage'][] = array(
 	'name' => 'Forum',
 	'author' => array( 'Hyun Lim', 'Kyle Florence', 'Saipetch Kongkatong', 'Tomasz Odrobny' ),

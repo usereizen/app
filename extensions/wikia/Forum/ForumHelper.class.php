@@ -1,4 +1,7 @@
 <?
+
+var_dump('Loading ' .  __FILE__);
+
 class ForumHelper {
 	public static $forumNamespaces = [NS_WIKIA_FORUM_BOARD, NS_WIKIA_FORUM_TOPIC_BOARD, NS_WIKIA_FORUM_BOARD_THREAD];
 
