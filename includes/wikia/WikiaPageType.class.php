@@ -160,6 +160,8 @@ class WikiaPageType {
 		$title = self::getTitle();
 
 		global $wgAutoloadClasses;
+		error_reporting(E_ALL);
+		ini_set('display_errors', '1');
 		var_dump(__METHOD__);
 		var_dump(F::app()->wg->EnableForumExt);
 		var_dump($wgAutoloadClasses['ForumHelper']);
