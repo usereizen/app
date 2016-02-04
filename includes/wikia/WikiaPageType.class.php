@@ -159,8 +159,10 @@ class WikiaPageType {
 	public static function isForum() {
 		$title = self::getTitle();
 
+		global $wgAutoloadClasses;
 		var_dump(__METHOD__);
 		var_dump(F::app()->wg->EnableForumExt);
+		var_dump($wgAutoloadClasses['ForumHelper']);
 		var_dump(class_exists('ForumHelper'));
 
 		return (
