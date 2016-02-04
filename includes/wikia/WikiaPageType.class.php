@@ -159,6 +159,10 @@ class WikiaPageType {
 	public static function isForum() {
 		$title = self::getTitle();
 
+		var_dump(__METHOD__);
+		var_dump(F::app()->wg->EnableForumExt);
+		var_dump(class_exists('ForumHelper'));
+
 		return (
 			( defined( 'NS_FORUM' ) && $title instanceof Title && $title->getNamespace() === NS_FORUM ) // old forum
 			|| ( F::app()->wg->EnableForumExt && ForumHelper::isForum() )                               // new forum
