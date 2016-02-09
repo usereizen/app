@@ -195,6 +195,7 @@ class NjordHelper {
 	public function getDatabaseByCityId( $cityId ) {
 		$wikia = $this->getWikiaDataById( $cityId );
 		$wikiaDbName = $wikia->city_dbname;
+		echo $wikiaDbName;
 		$db = wfGetDB( DB_SLAVE, array(), $wikiaDbName );
 		return $db;
 	}
