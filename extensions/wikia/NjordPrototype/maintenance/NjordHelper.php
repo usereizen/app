@@ -106,7 +106,7 @@ class NjordHelper {
 	 */
 	public function getWikiIDsWithNjordExt() {
 		$db = wfGetDB( DB_MASTER, array(), 'wikicities' );
-		$sql = 'SELECT cv_id FROM `city_variables_pool` WHERE cv_name="' . self::NJORD_VAR_NAME . '"';
+		$sql = 'SELECT cv_id FROM `city_variables_pool` LEFT JOIN city_list ON cv_id = city_id WHERE city_public = 1 and cv_name="' . self::NJORD_VAR_NAME . '"';
 		$res = $db->query( $sql );
 		$cv_id = $db->fetchObject( $res );
 		$city_list_with_njord_ext = [];
@@ -193,10 +193,8 @@ class NjordHelper {
 	 * @return DatabaseBase|TotallyFakeDatabase
 	 */
 	public function getDatabaseByCityId( $cityId ) {
-		echo $cityId;
 		$wikia = $this->getWikiaDataById( $cityId );
 		$wikiaDbName = $wikia->city_dbname;
-		echo $wikiaDbName;
 		$db = wfGetDB( DB_SLAVE, array(), $wikiaDbName );
 		return $db;
 	}
