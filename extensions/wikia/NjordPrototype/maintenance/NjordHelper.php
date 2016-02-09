@@ -106,14 +106,14 @@ class NjordHelper {
 	 */
 	public function getWikiIDsWithNjordExt() {
 		$db = wfGetDB( DB_MASTER, array(), 'wikicities' );
-		$sql = 'SELECT cv_id FROM `city_variables_pool` LEFT JOIN city_list ON cv_id = city_id WHERE city_public = 1 and cv_name="' . self::NJORD_VAR_NAME . '"';
+		$sql = 'SELECT cv_id FROM `city_variables_pool` WHERE cv_name="' . self::NJORD_VAR_NAME . '"';
 		$res = $db->query( $sql );
 		$cv_id = $db->fetchObject( $res );
 		$city_list_with_njord_ext = [];
 		if ( $cv_id ) {
 			$cv_id = $cv_id->cv_id;
-			$sql = 'SELECT cv_city_id FROM city_variables
-					WHERE cv_variable_id=' . (int) $cv_id . ' AND cv_value="' . serialize( true ) . '" ORDER BY cv_city_id';
+			$sql = 'SELECT cv_city_id FROM city_variables LEFT JOIN city_list ON cv_city_id = city_id
+					WHERE city_public=1 and cv_variable_id=' . (int) $cv_id . ' AND cv_value="' . serialize( true ) . '" ORDER BY cv_city_id';
 
 			$res = $db->query( $sql );
 			while ( $cv = $db->fetchObject( $res ) ) {
