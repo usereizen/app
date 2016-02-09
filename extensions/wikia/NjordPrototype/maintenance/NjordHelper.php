@@ -193,6 +193,7 @@ class NjordHelper {
 	 * @return DatabaseBase|TotallyFakeDatabase
 	 */
 	public function getDatabaseByCityId( $cityId ) {
+		echo $cityId;
 		$wikia = $this->getWikiaDataById( $cityId );
 		$wikiaDbName = $wikia->city_dbname;
 		echo $wikiaDbName;
