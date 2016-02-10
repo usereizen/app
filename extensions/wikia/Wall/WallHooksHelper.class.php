@@ -1632,7 +1632,7 @@ class WallHooksHelper {
 		$prefix = MWNamespace::getSubject( $row->page_namespace ) === NS_WIKIA_FORUM_BOARD ? 'forum' : 'wall';
 		$ret .= $contribsPager->msg( $prefix . '-contributions-line' )
 			->params( $wfMsgOptsBase['articleTitle'] )
-			->rawParams( htmlspecialchars( $wfMsgOptsBase['articleTitleTxt'] ) )
+			->params( $wfMsgOptsBase['articleTitleTxt'] )
 			->params( $wfMsgOptsBase['wallTitleTxt'], $wfMsgOptsBase['wallPageName'] )
 			->parse();
 
