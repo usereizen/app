@@ -36,6 +36,10 @@ abstract class UserTagsStrategyBase {
 	protected function isBlocked() {
 		wfProfileIn(__METHOD__);
 
+		var_dump(__METHOD__);
+		var_dump($this->user->getBlock());
+		var_dump($this->user->isBlockedGlobally());
+
 		// check if the user is blocked locally, if not, also check if they're blocked globally (via Phalanx)
 		$isBlocked = $this->user->isBlocked() || $this->user->isBlockedGlobally();
 

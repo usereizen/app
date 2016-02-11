@@ -8,6 +8,8 @@ class PhalanxUserModel extends PhalanxModel {
 	}
 	
 	public function getText() {
+		var_dump(wfBacktrace());
+
 		return ( !empty( $this->text ) ) ? $this->text : array( ( $this->user instanceof User ) ? $this->user->getName() : "", $this->ip );
 	}
 	

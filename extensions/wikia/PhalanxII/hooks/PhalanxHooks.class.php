@@ -93,6 +93,7 @@ class PhalanxHooks extends WikiaObject {
 		wfProfileIn( __METHOD__ );
 
 		if ( !isset( $data['id'] ) ) {
+			wfDebug( __METHOD__ . ": ID field is missing\n" );
 			wfProfileOut( __METHOD__ );
 			return false;
 		}
@@ -115,6 +116,7 @@ class PhalanxHooks extends WikiaObject {
 
 		// VSTF should not be allowed to block emails in Phalanx
 		if ( ($typemask & Phalanx::TYPE_EMAIL ) && !F::app()->wg->User->isAllowed( 'phalanxemailblock' ) ) {
+			wfDebug( __METHOD__ . ": phalanxemailblock right is required to block emails\n" );
 			wfProfileOut( __METHOD__ );
 			return false;
 		}
@@ -127,6 +129,7 @@ class PhalanxHooks extends WikiaObject {
 		unset( $phalanx['multitext'] );
 
 		if ( ( empty( $phalanx['text'] ) && empty( $multitext ) ) || empty( $typemask ) ) {
+			wfDebug( __METHOD__ . ": text field is missing\n" );
 			wfProfileOut( __METHOD__ );
 			return false;
 		}
@@ -144,6 +147,7 @@ class PhalanxHooks extends WikiaObject {
 			$expire = strtotime( $phalanx['expire'] );
 			if ( $expire < 0 || $expire === false ) {
 				wfProfileOut( __METHOD__ );
+				wfDebug( __METHOD__ . ": expire is incorrect\n" );
 				return false;
 			}
 			$phalanx['expire'] = wfTimestamp( TS_MW, $expire );
@@ -155,6 +159,10 @@ class PhalanxHooks extends WikiaObject {
 			/* single mode - insert/update record */
 			$data['id'] = $phalanx->save();
 			$result = $data['id'] ? array( "success" => array( $data['id'] ), "failed" => 0 ) : false;
+
+			if ( $result === false ) {
+				wfDebug(__METHOD__ . ": block save failed\n");
+			}
 		}
 		else {
 			/* non-empty bulk field */
@@ -174,6 +182,7 @@ class PhalanxHooks extends WikiaObject {
 					}
 				}
 			} else {
+				wfDebug( __METHOD__ . ": bulk insert failed\n" );
 				$result = false;
 			}
 		}
@@ -184,6 +193,9 @@ class PhalanxHooks extends WikiaObject {
 		} else {
 			$ret = $result;
 		}
+
+		var_dump(__METHOD__);
+		var_dump($ret);
 
 		wfProfileOut( __METHOD__ );
 		return $ret;

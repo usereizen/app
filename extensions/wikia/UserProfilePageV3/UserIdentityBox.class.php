@@ -71,6 +71,11 @@ class UserIdentityBox {
 	public function getFullData() {
 		wfProfileIn( __METHOD__ );
 		$data = $this->getUserData( 'getDefaultData' );
+
+		var_dump(__METHOD__);
+		var_dump($data);
+		die;
+
 		wfProfileOut( __METHOD__ );
 		return $data;
 	}

@@ -61,6 +61,8 @@ function wfGetIP() {
  * @return bool
  */
 function wfIsTrustedProxy( $ip ) {
+	return false;
+
 	global $wgSquidServers, $wgSquidServersNoPurge;
 
 	$trusted = in_array( $ip, $wgSquidServers ) ||
