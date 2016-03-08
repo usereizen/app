@@ -93,8 +93,8 @@ class EventsCleanup extends Maintenance {
 			'city_list',
 			'city_id',
 			[
-				'city_public' => WikiFactory::HIDE_ACTION,
-				sprintf( 'city_lastdump_timestamp < "%s"', $closedBefore )
+				'city_public' => [ WikiFactory::HIDE_ACTION, WikiFactory::CLOSE_ACTION ],
+				sprintf( 'city_lastdump_timestamp > "%s"', $closedBefore )
 			],
 			__METHOD__
 		);
