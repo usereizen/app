@@ -23,13 +23,17 @@ if ( !$allowRobots ) {
 	$robots->disallowPath( '/' );
 } elseif ( $experimentalRobots ) {
 	// Sitemap
-	$robots->setSitemap( sprintf( 'http://%s/sitemap-index.xml', $_SERVER['SERVER_NAME'] ) );
+	if ( !empty( $wgEnableSpecialSitemapExt ) ) {
+		$robots->setSitemap( sprintf( 'http://%s/sitemap-index.xml', $_SERVER['SERVER_NAME'] ) );
+	}
 
 	// Experimental content
 	$robots->setExperimentalAllowDisallowSection( $experimentalRobots );
 } else {
 	// Sitemap
-	$robots->setSitemap( sprintf( 'http://%s/sitemap-index.xml', $_SERVER['SERVER_NAME'] ) );
+	if ( !empty( $wgEnableSpecialSitemapExt ) ) {
+		$robots->setSitemap( sprintf( 'http://%s/sitemap-index.xml', $_SERVER['SERVER_NAME'] ) );
+	}
 
 	// Special pages
 	$robots->disallowNamespace( NS_SPECIAL );
@@ -41,6 +45,10 @@ if ( !$allowRobots ) {
 	$robots->allowSpecialPage( 'Forum' );
 	$robots->allowSpecialPage( 'Sitemap' );
 	$robots->allowSpecialPage( 'Videos' );
+
+	if ( !empty( $wgAllowSpecialImagesInRobots ) ) {
+		$robots->allowSpecialPage( 'Images' );
+	}
 
 	// Params
 	$robots->disallowParam( 'action' );
