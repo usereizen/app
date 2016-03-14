@@ -312,6 +312,8 @@ abstract class WikiaSkin extends SkinTemplate {
 			$scripts .= Html::inlineScript('window.mw.fk&&delete mw;') . "\n";
 		}
 
+		wfRunHooks( 'WikiaSkinTopAnalyticsScripts', array( &$scripts ) );
+
 		return self::makeInlineVariablesScript($vars) . $scripts;
 	}
 

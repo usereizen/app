@@ -6,7 +6,8 @@ class AnalyticsProviderIVW3 implements iAnalyticsProvider {
 
 	private static $libraryUrl = 'https://script.ioam.de/iam.js';
 	private static $siteId = 'wikia';
-	private static $template = 'extensions/wikia/AnalyticsEngine/templates/ivw3.mustache';
+	private static $headTemplate = 'extensions/wikia/AnalyticsEngine/templates/ivw3.head.mustache';
+	private static $bodyTemplate = 'extensions/wikia/AnalyticsEngine/templates/ivw3.body.mustache';
 	private static $themes = [
 		'111264/275' => 'none', // http://de.wikia.com/Wikia
 		'111264/1824' => 'Angebotsinformation', // http://de.wikia.com/%C3%9Cber_Wikia
@@ -26,6 +27,20 @@ class AnalyticsProviderIVW3 implements iAnalyticsProvider {
 
 	static public function onInstantGlobalsGetVariables( array &$vars ) {
 		$vars[] = 'wgSitewideDisableIVW3';
+
+		return true;
+	}
+
+	static public function onWikiaSkinTopAnalyticsScripts( &$scripts ){
+		global $wgAnalyticsDriverIVW3Countries;
+
+		$scripts .= \MustacheService::getInstance()->render(
+			self::$headTemplate,
+			[
+				'countries' => json_encode( $wgAnalyticsDriverIVW3Countries ),
+				'url' => self::$libraryUrl
+			]
+		);
 
 		return true;
 	}
@@ -57,7 +72,7 @@ class AnalyticsProviderIVW3 implements iAnalyticsProvider {
 		global $wgAnalyticsDriverIVW3Countries;
 
 		return \MustacheService::getInstance()->render(
-			self::$template,
+			self::$bodyTemplate,
 			[
 				'countries' => json_encode( $wgAnalyticsDriverIVW3Countries ),
 				'siteId' => self::$siteId,

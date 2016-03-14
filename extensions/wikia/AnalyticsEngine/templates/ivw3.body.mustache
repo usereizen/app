@@ -1,0 +1,17 @@
+<!-- Begin IVW3 body tag -->
+<script type="text/javascript">
+	var iam_data = {
+		st: '{{siteId}}',
+		cp: '{{cmKey}}',
+		sv: 'i2'
+	};
+
+	if (window.Wikia &&
+			window.Wikia.InstantGlobals &&
+			!window.Wikia.InstantGlobals.wgSitewideDisableIVW3 &&
+			window.Wikia.geo.isProperGeo({{{countries}}})
+	) {
+		window.iom.c(iam_data, 2);
+	}
+</script>
+<!-- End IVW3 body tag -->
