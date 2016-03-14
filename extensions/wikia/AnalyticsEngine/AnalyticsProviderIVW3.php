@@ -34,13 +34,15 @@ class AnalyticsProviderIVW3 implements iAnalyticsProvider {
 	static public function onWikiaSkinTopAnalyticsScripts( &$scripts ){
 		global $wgAnalyticsDriverIVW3Countries;
 
-		$scripts .= \MustacheService::getInstance()->render(
-			self::$headTemplate,
-			[
-				'countries' => json_encode( $wgAnalyticsDriverIVW3Countries ),
-				'url' => self::$libraryUrl
-			]
-		);
+		if ( self::isEnabled() ) {
+			$scripts .= \MustacheService::getInstance()->render(
+				self::$headTemplate,
+				[
+					'countries' => json_encode( $wgAnalyticsDriverIVW3Countries ),
+					'url' => self::$libraryUrl
+				]
+			);
+		}
 
 		return true;
 	}
