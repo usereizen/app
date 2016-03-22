@@ -111,4 +111,63 @@ class PortableInfoboxHooks {
 
 		return true;
 	}
+
+	/**
+	 *
+	 * @param array $args
+	 */
+	public static function onAfterWikiCreated(Array $args) {
+		global $wgQueryPages, $wgQueryCacheLimit;
+
+		$dbw = wfGetDB( DB_MASTER );
+
+		// This is needed to initialise $wgQueryPages
+		require_once( "../../../includes/QueryPage.php" );
+
+		//TODO: replace var_dumps with logger
+		foreach ( $wgQueryPages as $page ) {
+			list( $class, $special ) = $page;
+
+			if ( $special !== \AllinfoboxesQueryPage::ALL_INFOBOXES_TYPE ) {
+				continue;
+			}
+
+			$limit = isset( $page[2] ) ? $page[2] : null;
+
+			var_dump($page);
+
+			$specialObj = SpecialPageFactory::getPage( $special );
+
+			if ( $specialObj instanceof QueryPage ) {
+				$queryPage = $specialObj;
+			} else {
+				if ( !class_exists( $class ) ) {
+					$file = $specialObj->getFile();
+					require_once( $file );
+				}
+				$queryPage = new $class;
+			}
+
+			# Do the query
+			$num = $queryPage->recache( $limit === null ? $wgQueryCacheLimit : $limit );
+			if ( $num === false ) {
+				var_dump('FAILED: database error');
+			}
+
+			# Commit the results
+			$res = $dbw->commit( __METHOD__ );
+
+			//TODO: handle commit failure in better way (async task?)
+//			# try to reconnect to the master
+//			if ( $res === false ) {
+//				do {
+//					var_dump('commit failed, reconnecting');
+//					sleep( 10 );
+//				} while ( !$dbw->ping() );
+//				var_dump( "Reconnected\n\n" );
+//			}
+			# Wait for the slave to catch up
+			wfWaitForSlaves();
+		}
+	}
 }

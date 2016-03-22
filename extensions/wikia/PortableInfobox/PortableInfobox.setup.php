@@ -81,6 +81,7 @@ $wgHooks[ 'AllInfoboxesQueryRecached' ][] = 'PortableInfoboxHooks::onAllInfoboxe
 $wgHooks[ 'ArticlePurge' ][] = 'PortableInfoboxHooks::onArticlePurge';
 $wgHooks[ 'ArticleSave' ][] = 'PortableInfoboxHooks::onArticleSave';
 $wgHooks[ 'BacklinksPurge' ][] = 'PortableInfoboxHooks::onBacklinksPurge';
+$wgHooks[ 'AfterWikiCreated' ][] = 'PortableInfoboxHooks::onAfterWikiCreated';
 
 // special pages
 $wgSpecialPages[ 'AllInfoboxes' ] = 'AllinfoboxesQueryPage';
