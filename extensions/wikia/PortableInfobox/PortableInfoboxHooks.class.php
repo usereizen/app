@@ -117,35 +117,12 @@ class PortableInfoboxHooks {
 	 * @param array $args
 	 */
 	public static function onAfterWikiCreated($cityId, $somethingElse) {
-//		 This is needed to initialise $wgQueryPages
-		global $IP;
-		require_once( "$IP/includes/QueryPage.php" );
+		$dbName = WikiFactory::getVarValueByName("wgDBname", $cityId);
 
-		global $wgQueryPages;
+		$dbw = wfGetDB( DB_MASTER, [], $dbName );
 
-		$queryCacheLimit = WikiFactory::getVarValueByName("wgQueryCacheLimit", $cityId);
-
-		$dbw = wfGetDB( DB_MASTER );
-
-		$allInfoboxesQP = array_filter($wgQueryPages, function($page) {
-			list( $class, $special ) = $page;
-			return $special == \AllinfoboxesQueryPage::ALL_INFOBOXES_TYPE;
-		});
-
-		if ( empty($allInfoboxesQP) ) {
-			return true;
-		}
-
-		$limit = isset( $allInfoboxesQP[0][2] ) ? $allInfoboxesQP[0][2] : null;
-
-		$queryPage = SpecialPageFactory::getPage( \AllinfoboxesQueryPage::ALL_INFOBOXES_TYPE );
-
-		# Do the query
-		$num = $queryPage->recache( $limit === null ? $queryCacheLimit : $limit );
-		if ( $num === false ) {
-			wfDebugLog( 'FAILED: database error', true );
-			return true;
-		}
+		$queryPage = new AllinfoboxesQueryPage($dbName);
+		$queryPage->recache();
 
 		# Commit the results
 		$res = $dbw->commit( __METHOD__ );

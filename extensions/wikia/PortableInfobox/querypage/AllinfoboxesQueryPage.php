@@ -5,9 +5,11 @@ class AllinfoboxesQueryPage extends PageQueryPage {
 	const LIMIT = 1000;
 	const ALL_INFOBOXES_TYPE = 'AllInfoboxes';
 	private static $subpagesBlacklist = [ 'doc', 'draft', 'test' ];
+	private $db;
 
-	function __construct() {
+	function __construct($dbName = false) {
 		parent::__construct( self::ALL_INFOBOXES_TYPE );
+		$this->db = $dbName;
 	}
 
 	public function isListed() {
@@ -43,7 +45,7 @@ class AllinfoboxesQueryPage extends PageQueryPage {
 	 * @return int number of rows updated
 	 */
 	public function recache( $limit = false, $ignoreErrors = true ) {
-		$dbw = wfGetDB( DB_MASTER );
+		$dbw = wfGetDB( DB_MASTER, [], $wiki=$this->db );
 
 		$infoboxes = $this->reallyDoQuery();
 
@@ -78,7 +80,7 @@ class AllinfoboxesQueryPage extends PageQueryPage {
 	 * @return bool|mixed
 	 */
 	public function reallyDoQuery( $limit = false, $offset = false ) {
-		$dbr = wfGetDB( DB_SLAVE, [ $this->getName(), __METHOD__, 'vslow' ] );
+		$dbr = wfGetDB( DB_SLAVE, [ $this->getName(), __METHOD__, 'vslow' ], $this->db );
 		$result = ( new WikiaSQL() )
 			->SELECT( 'page_id', 'page_title', 'page_namespace' )
 			->FROM( 'page' )
