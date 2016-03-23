@@ -45,7 +45,7 @@ class AllinfoboxesQueryPage extends PageQueryPage {
 	 * @return int number of rows updated
 	 */
 	public function recache( $limit = false, $ignoreErrors = true ) {
-		$dbw = wfGetDB( DB_MASTER, [], $wiki=$this->db );
+		$dbw = wfGetDB( DB_MASTER, [], $this->db );
 
 		$infoboxes = $this->reallyDoQuery();
 
