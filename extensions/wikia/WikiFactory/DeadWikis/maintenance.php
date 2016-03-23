@@ -26,7 +26,6 @@ require_once( "commandLine.inc" );
 class AutomatedDeadWikisDeletionMaintenance {
 
 	const BATCH_SIZE = 100;
-	const COMMUNITY_ID = 177;
 	const DELETION_REASON = 'dead wiki';
 
 	const DELETE_NOW = 'deleteNow';
@@ -225,8 +224,8 @@ class AutomatedDeadWikisDeletionMaintenance {
 		global $wgWikiaLocalSettingsPath;
 
 		$idsList = implode(',',$ids);
-		$cmd = "SERVER_ID=" . self::COMMUNITY_ID . " php " . __FILE__ . " ".
-			"--action evaluate --ids {$idsList} --conf {$wgWikiaLocalSettingsPath}";
+		$cmd = "SERVER_ID=" . Wikia::COMMUNITY_WIKI_ID . " php " . __FILE__ . " ".
+			"--action evaluate --ids {$idsList} --conf {$wgWikiaLocalSettingsPath} 2>&1";
 
 		$exitCode = null;
 		$output = wfShellExec($cmd, $exitCode);
