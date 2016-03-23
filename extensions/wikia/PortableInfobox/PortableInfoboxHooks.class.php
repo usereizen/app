@@ -116,7 +116,7 @@ class PortableInfoboxHooks {
 	 *
 	 * @param array $args
 	 */
-	public static function onAfterWikiCreated(Array $args) {
+	public static function onAfterWikiCreated($args) {
 		global $wgQueryPages, $wgQueryCacheLimit;
 
 		wfDebugLog( "onAfterWikiCreated","start hook", true );
