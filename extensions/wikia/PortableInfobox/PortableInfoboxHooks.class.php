@@ -116,19 +116,21 @@ class PortableInfoboxHooks {
 	 *
 	 * @param array $args
 	 */
-	public static function onAfterWikiCreated($args) {
-		$wgQueryPages = WikiFactory::getVarByName("wgQueryPages", $args[0]);
-		$wgQueryCacheLimit = WikiFactory::getVarByName("wgQueryCacheLimit", $args[0]);
+	public static function onAfterWikiCreated($cityId, $somethingElse) {
+		$queryPages = WikiFactory::getVarValueByName("wgQueryPages", $cityId);
+		$queryCacheLimit = WikiFactory::getVarValueByName("wgQueryCacheLimit", $cityId);
+
+
 
 		\Wikia\Logger\WikiaLogger::instance()->info("onAfterWikiCreated: start hook" );
-		\Wikia\Logger\WikiaLogger::instance()->info("onAfterWikiCreated: cityId ".$args[0] );
+		\Wikia\Logger\WikiaLogger::instance()->info("onAfterWikiCreated: cityId ".$cityId );
 
 		$dbw = wfGetDB( DB_MASTER );
 
 		// This is needed to initialise $wgQueryPages
 //		require_once( "../../includes/QueryPage.php" );
 
-		$infoboxes = array_filter($wgQueryPages, function($page) {
+		$infoboxes = array_filter($queryPages, function($page) {
 			list( $class, $special ) = $page;
 			return $special == \AllinfoboxesQueryPage::ALL_INFOBOXES_TYPE;
 		});
@@ -155,7 +157,7 @@ class PortableInfoboxHooks {
 			}
 
 			# Do the query
-			$num = $queryPage->recache( $limit === null ? $wgQueryCacheLimit : $limit );
+			$num = $queryPage->recache( $limit === null ? $queryCacheLimit : $limit );
 			if ( $num === false ) {
 				wfDebugLog( 'FAILED: database error', true );
 				return true;
