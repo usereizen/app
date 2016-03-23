@@ -117,56 +117,40 @@ class PortableInfoboxHooks {
 	 * @param array $args
 	 */
 	public static function onAfterWikiCreated($cityId, $somethingElse) {
-		$queryPages = WikiFactory::getVarValueByName("wgQueryPages", $cityId);
+//		 This is needed to initialise $wgQueryPages
+		global $IP;
+		require_once( "$IP/includes/QueryPage.php" );
+
+		global $wgQueryPages;
+
 		$queryCacheLimit = WikiFactory::getVarValueByName("wgQueryCacheLimit", $cityId);
-
-
-
-		\Wikia\Logger\WikiaLogger::instance()->info("onAfterWikiCreated: start hook" );
-		\Wikia\Logger\WikiaLogger::instance()->info("onAfterWikiCreated: cityId ".$cityId );
 
 		$dbw = wfGetDB( DB_MASTER );
 
-		// This is needed to initialise $wgQueryPages
-//		require_once( "../../includes/QueryPage.php" );
-
-		$infoboxes = array_filter($queryPages, function($page) {
+		$allInfoboxesQP = array_filter($wgQueryPages, function($page) {
 			list( $class, $special ) = $page;
 			return $special == \AllinfoboxesQueryPage::ALL_INFOBOXES_TYPE;
 		});
 
+		if ( empty($allInfoboxesQP) ) {
+			return true;
+		}
 
-		foreach ( $infoboxes as $page ) {
-			list( $class, $special ) = $page;
+		$limit = isset( $allInfoboxesQP[0][2] ) ? $allInfoboxesQP[0][2] : null;
 
-			$limit = isset( $page[2] ) ? $page[2] : null;
+		$queryPage = SpecialPageFactory::getPage( \AllinfoboxesQueryPage::ALL_INFOBOXES_TYPE );
 
-			$specialObj = SpecialPageFactory::getPage( $special );
+		# Do the query
+		$num = $queryPage->recache( $limit === null ? $queryCacheLimit : $limit );
+		if ( $num === false ) {
+			wfDebugLog( 'FAILED: database error', true );
+			return true;
+		}
 
-			if ( $specialObj instanceof QueryPage ) {
-				$queryPage = $specialObj;
-			} else {
-				wfDebugLog( 'specialObj is not instance of querypage', true );
+		# Commit the results
+		$res = $dbw->commit( __METHOD__ );
 
-				return true;
-//				if ( !class_exists( $class ) ) {
-//					$file = $specialObj->getFile();
-//					require_once( $file );
-//				}
-//				$queryPage = new $class;
-			}
-
-			# Do the query
-			$num = $queryPage->recache( $limit === null ? $queryCacheLimit : $limit );
-			if ( $num === false ) {
-				wfDebugLog( 'FAILED: database error', true );
-				return true;
-			}
-
-			# Commit the results
-			$res = $dbw->commit( __METHOD__ );
-
-			//TODO: handle commit failure in better way (async task?)
+		//TODO: handle commit failure in better way (async task?)
 //			# try to reconnect to the master
 //			if ( $res === false ) {
 //				do {
@@ -175,9 +159,9 @@ class PortableInfoboxHooks {
 //				} while ( !$dbw->ping() );
 //				var_dump( "Reconnected\n\n" );
 //			}
-			# Wait for the slave to catch up
-			wfWaitForSlaves();
-		}
+		# Wait for the slave to catch up
+		wfWaitForSlaves();
+
 		return true;
 	}
 }
