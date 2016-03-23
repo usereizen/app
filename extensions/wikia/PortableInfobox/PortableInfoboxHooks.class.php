@@ -117,9 +117,11 @@ class PortableInfoboxHooks {
 	 * @param array $args
 	 */
 	public static function onAfterWikiCreated($args) {
-		global $wgQueryPages, $wgQueryCacheLimit;
+		global $wgCityId, $wgQueryPages, $wgQueryCacheLimit;
 
-		wfDebugLog( "onAfterWikiCreated","start hook", true );
+
+		\Wikia\Logger\WikiaLogger::instance()->info("onAfterWikiCreated: start hook" );
+		\Wikia\Logger\WikiaLogger::instance()->info("onAfterWikiCreated: cityId ".$wgCityId );
 
 		$dbw = wfGetDB( DB_MASTER );
 
