@@ -124,34 +124,38 @@ class PortableInfoboxHooks {
 		// This is needed to initialise $wgQueryPages
 		require_once( "../../../includes/QueryPage.php" );
 
+		var_dump("getting infobox templates");
+		$infoboxes = array_filter($wgQueryPages, function($page) {
+			list( $class, $special ) = $page;
+			return $special == \AllinfoboxesQueryPage::ALL_INFOBOXES_TYPE;
+		});
+
 		//TODO: replace var_dumps with logger
-		foreach ( $wgQueryPages as $page ) {
+		foreach ( $infoboxes as $page ) {
+			var_dump($page);
 			list( $class, $special ) = $page;
 
-			if ( $special !== \AllinfoboxesQueryPage::ALL_INFOBOXES_TYPE ) {
-				continue;
-			}
-
 			$limit = isset( $page[2] ) ? $page[2] : null;
-
-			var_dump($page);
 
 			$specialObj = SpecialPageFactory::getPage( $special );
 
 			if ( $specialObj instanceof QueryPage ) {
 				$queryPage = $specialObj;
 			} else {
-				if ( !class_exists( $class ) ) {
-					$file = $specialObj->getFile();
-					require_once( $file );
-				}
-				$queryPage = new $class;
+				var_dump('specialObj is not instance of querypage');
+				return true;
+//				if ( !class_exists( $class ) ) {
+//					$file = $specialObj->getFile();
+//					require_once( $file );
+//				}
+//				$queryPage = new $class;
 			}
 
 			# Do the query
 			$num = $queryPage->recache( $limit === null ? $wgQueryCacheLimit : $limit );
 			if ( $num === false ) {
 				var_dump('FAILED: database error');
+				return true;
 			}
 
 			# Commit the results
@@ -169,5 +173,6 @@ class PortableInfoboxHooks {
 			# Wait for the slave to catch up
 			wfWaitForSlaves();
 		}
+		return true;
 	}
 }
