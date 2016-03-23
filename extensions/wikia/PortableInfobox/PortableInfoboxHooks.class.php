@@ -124,7 +124,7 @@ class PortableInfoboxHooks {
 		$dbw = wfGetDB( DB_MASTER );
 
 		// This is needed to initialise $wgQueryPages
-		require_once( "../../../includes/QueryPage.php" );
+//		require_once( "../../includes/QueryPage.php" );
 
 		$infoboxes = array_filter($wgQueryPages, function($page) {
 			list( $class, $special ) = $page;
