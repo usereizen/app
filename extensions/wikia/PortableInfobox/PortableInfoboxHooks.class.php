@@ -119,20 +119,20 @@ class PortableInfoboxHooks {
 	public static function onAfterWikiCreated(Array $args) {
 		global $wgQueryPages, $wgQueryCacheLimit;
 
+		wfDebugLog( "onAfterWikiCreated","start hook", true );
+
 		$dbw = wfGetDB( DB_MASTER );
 
 		// This is needed to initialise $wgQueryPages
 		require_once( "../../../includes/QueryPage.php" );
 
-		var_dump("getting infobox templates");
 		$infoboxes = array_filter($wgQueryPages, function($page) {
 			list( $class, $special ) = $page;
 			return $special == \AllinfoboxesQueryPage::ALL_INFOBOXES_TYPE;
 		});
 
-		//TODO: replace var_dumps with logger
+
 		foreach ( $infoboxes as $page ) {
-			var_dump($page);
 			list( $class, $special ) = $page;
 
 			$limit = isset( $page[2] ) ? $page[2] : null;
@@ -142,7 +142,8 @@ class PortableInfoboxHooks {
 			if ( $specialObj instanceof QueryPage ) {
 				$queryPage = $specialObj;
 			} else {
-				var_dump('specialObj is not instance of querypage');
+				wfDebugLog( 'specialObj is not instance of querypage', true );
+
 				return true;
 //				if ( !class_exists( $class ) ) {
 //					$file = $specialObj->getFile();
@@ -154,7 +155,7 @@ class PortableInfoboxHooks {
 			# Do the query
 			$num = $queryPage->recache( $limit === null ? $wgQueryCacheLimit : $limit );
 			if ( $num === false ) {
-				var_dump('FAILED: database error');
+				wfDebugLog( 'FAILED: database error', true );
 				return true;
 			}
 
