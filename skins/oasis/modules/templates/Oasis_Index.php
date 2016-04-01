@@ -66,10 +66,10 @@
 	<div class="background-image-gradient"></div>
 <? endif ?>
 
+<script type="text/javascript" src="http://wikia-d.openx.net/w/1.0/jstag?nc=5441-Pre_Wikia"></script>
 <?= $comScore ?>
 <?= $quantServe ?>
 <?= $amazonMatch ?>
-<?= $openXBidder ?>
 <?= $rubiconFastlane ?>
 <?= $krux ?>
 <?= $dynamicYield ?>

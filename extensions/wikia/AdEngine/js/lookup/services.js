@@ -19,7 +19,6 @@ define('ext.wikia.adEngine.lookup.services', [
 	var logGroup = 'ext.wikia.adEngine.lookup.services',
 		bidders = [
 			amazonMatch,
-			oxBidder,
 			rubiconFastlane
 		];
 
