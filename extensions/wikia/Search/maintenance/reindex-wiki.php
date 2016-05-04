@@ -33,7 +33,7 @@ foreach ( $select as $row ) {
 $indexer = new Wikia\Search\Indexer();
 $idCount = count( $ids );
 $sliceCount = 0;
-$batchSize = 100;
+$batchSize = 10000;
 foreach ( array_chunk( $ids, $batchSize ) as $idSlice ) {
 	$sliceCount += $batchSize;
 	$indexer->reindexBatch( $idSlice );
