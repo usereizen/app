@@ -1,4 +1,4 @@
-require( ['wikia.querystring', require.optional( 'wikia.cookies' ), 'track', 'wikia.window', 'jquery' ], function ( qs, cookies, track, window, $ ) {
+require( ['wikia.querystring', require.optional( 'wikia.cookies' ), 'track', 'weppy', 'wikia.window', 'jquery' ], function ( qs, cookies, track, weppy, window, $ ) {
 	'use strict';
 
 	var d = window.document;
@@ -60,4 +60,9 @@ require( ['wikia.querystring', require.optional( 'wikia.cookies' ), 'track', 'wi
 			href: this.href
 		}, event );
 	} );
+
+	if (window.wgFirstRender) {
+		var sink = weppy('wikiamobile');
+		sink.timer.send('firstRender', window.wgFirstRender);
+	}
 } );

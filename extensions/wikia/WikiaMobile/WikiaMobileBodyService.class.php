@@ -23,6 +23,14 @@ class WikiaMobileBodyService extends WikiaService {
 			$afterContentHookText = '';
 		}
 
+		// Measure first renderTime, copied from Mercury
+		$this->response->setVal(
+			'firstRenderTime',
+			( new Wikia\Template\MustacheEngine )
+				->setPrefix( dirname( __FILE__ ) . '/templates' )
+				->render( 'WikiaMobileFirstRenderTime.mustache' )
+		);
+
 		/* Dont show header if user profile page */
 		if( !$this->wg->Title->inNamespace( NS_USER ) ){
 			$this->response->setVal( 'pageHeaderContent', $this->app->renderView( 'WikiaMobilePageHeaderService', 'index' ));

@@ -12,6 +12,7 @@
  */
 ?>
 <section id=wkPage>
+	<?= !empty( $firstRenderTime ) ? $firstRenderTime : ''; ?>
 	<?= !empty( $pageHeaderContent ) ? $pageHeaderContent : ''; ?>
 	<article id=wkMainCnt>
 		<?= $bodyContent ;?>
