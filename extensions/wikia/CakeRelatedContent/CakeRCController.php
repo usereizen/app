@@ -18,4 +18,19 @@ class CakeRCController extends WikiaController {
 		];
 		return true;
 	}
+
+	/**
+	 * @param OutputPage $out
+	 *
+	 * @return bool
+	 */
+	public static function onBeforePageDisplay(&$out) {
+		$out->addLink([
+			'rel'  => 'import',
+			'href' => '/bower_components/related-content/related-content.html',
+		]);
+		$out->addScript('<script type="text/javascript" src="/bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>');
+
+		return true;
+	}
 }
