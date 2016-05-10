@@ -15,6 +15,7 @@ class MemcacheMoxiCluster extends MemCachedClientforWiki {
 
 	function _safe_fwrite( $f, $host, $buf, $len = false ) {
 		global $wgMemcachedMoxiProtocol;
+		var_dump( $wgMemcachedMoxiProtocol );
 
 		// $protocol can be: A=ascii, B=binary
 		$protocol = $wgMemcachedMoxiProtocol === 'ascii' ? 'A' : 'B';
