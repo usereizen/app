@@ -14,6 +14,9 @@
 
 <!-- CSS injected by skin and extensions -->
 <?= $cssLinks ?>
+	
+	<script type="text/javascript" src="/bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+	<link rel="import" href="/bower_components/related-content/related-content.html">
 
 <?
 	/*
