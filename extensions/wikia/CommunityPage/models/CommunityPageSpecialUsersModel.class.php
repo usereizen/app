@@ -45,21 +45,19 @@ class CommunityPageSpecialUsersModel {
 	 * optionally filtered by admins only
 	 *
 	 * @param int $limit Number of rows to fetch
-	 * @param string $weekly True for weekly top contributors, false for all members (2 years)
+	 * @param boolean $weekly True for weekly top contributors, false for all members (2 years)
 	 * @param bool $onlyAdmins Whether to filter by admins
 	 * @return Mixed|null
 	 */
 	public function getTopContributors( $limit = 10, $weekly = true, $onlyAdmins = false ) {
+		$botIds = $this->getGlobalBotIds();
+
 		$data = WikiaDataAccess::cache(
 			wfMemcKey( self::TOP_CONTRIB_MCACHE_KEY, $limit, $weekly, $onlyAdmins ),
 			WikiaResponse::CACHE_STANDARD,
-			function () use ( $limit, $weekly, $onlyAdmins ) {
+			function () use ( $limit, $weekly, $onlyAdmins, $botIds ) {
 				global $wgExternalSharedDB, $wgDBcluster;
 				$db = wfGetDB( DB_SLAVE );
-				$adminFilter = '';
-				if ( $onlyAdmins ) {
-					$adminFilter = ' AND (ug_group = "sysop")';
-				}
 
 				if ( $weekly ) {
 					// From last Sunday (matches wikia_user_properties)
@@ -74,10 +72,15 @@ class CommunityPageSpecialUsersModel {
 					->LEFT_JOIN( $wgExternalSharedDB . '_' . $wgDBcluster . '.user' )->ON( '(rev_user <> 0) AND (user_id = rev_user)' )
 					->LEFT_JOIN( 'user_groups ON (user_id = ug_user)' )
 					->WHERE( 'user_id' )->IS_NOT_NULL()
-					->AND_( $dateFilter )
-					->AND_( '(ug_group IS NULL or (ug_group <> "bot"))' . $adminFilter )
+					->AND_( 'user_id' )->NOT_IN( $botIds )
+					->AND_( $dateFilter );
+
+				if ( $onlyAdmins ) {
+					$sqlData->AND_( 'ug_group' )->EQUAL_TO( 'sysop' );
+				}
+
 					// TODO: also filter by global bot user ids?
-					->GROUP_BY( 'user_name' )
+				$sqlData->GROUP_BY( 'user_name' )
 					->ORDER_BY( 'revision_count DESC, user_name' )
 					->LIMIT( $limit )
 					->runLoop( $db, function ( &$sqlData, $row ) {
@@ -95,6 +98,9 @@ class CommunityPageSpecialUsersModel {
 		return $data;
 	}
 
+	/**
+	 * @return array|null
+	 */
 	public function getGlobalBotIds() {
 		$botIds = WikiaDataAccess::cache(
 			wfMemcKey( self::GLOBAL_BOTS_MCACHE_KEY ),
@@ -182,19 +188,11 @@ class CommunityPageSpecialUsersModel {
 
 	/**
 	 * Utility function used to filter out users that should not show up on the member's list
-	 * @param $user
+	 * @param User $user
 	 * @return bool
 	 */
-	private function showMember( $user ) {
-		if ( $user->isAnon() ) {
-			return false;
-		} elseif ( $user->isBlocked() ) {
-			return false;
-		} elseif ( in_array( $user->getId(), self::getGlobalBotIds() ) ) {
-			return false;
-		}
-
-		return true;
+	private function showMember( User $user ) {
+		return !( $user->isAnon() || $user->isBlocked() || in_array( $user->getId(), $this->getGlobalBotIds() ) );
 	}
 
 	/**
