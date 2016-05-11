@@ -4,9 +4,10 @@
 class CakeRCController extends WikiaController {
 
 	const DEFAULT_TEMPLATE_ENGINE = WikiaResponse::TEMPLATE_ENGINE_MUSTACHE;
+	const API_PROXY = "/api/v1/CakeRC/RelatedContent";
 
 	public function container() {
-		$this->baseUrl = "http://content-entity.service.sjc-dev.consul:31930";
+		$this->baseUrl = self::API_PROXY;
 		$this->articleName = $_GET['articleTitle'];
 	}
 
