@@ -9,6 +9,7 @@ class CakeRCController extends WikiaController {
 	public function container() {
 		$this->baseUrl = self::API_PROXY;
 		$this->articleName = $_GET['articleTitle'];
+		$this->limit = 3;
 	}
 
 	public static function onGetRailModuleList(&$modules) {
