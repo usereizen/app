@@ -1,0 +1,32 @@
+{
+  "name": "related-content",
+  "authors": [
+    "nmonterroso <nelson@wikia-inc.com>"
+  ],
+  "description": "",
+  "main": "related-content.html",
+  "license": "MIT",
+  "homepage": "https://github.com/Wikia/related-content-element",
+  "ignore": [
+    "/.*",
+    "/test/"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.4.0",
+    "paper-progress": "^1.0.9",
+    "iron-ajax": "^1.2.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "web-component-tester": "^4.0.0"
+  },
+  "_release": "61e3e18caf",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "61e3e18caff934e5d72ccd7cbca13a4311c76503"
+  },
+  "_source": "git@github.com:Wikia/related-content-element.git",
+  "_target": "*",
+  "_originalSource": "git@github.com:Wikia/related-content-element.git"
+}

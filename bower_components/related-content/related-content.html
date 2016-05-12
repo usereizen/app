@@ -1,0 +1,168 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../paper-progress/paper-progress.html">
+
+<!--
+An element providing a view of content related to an entity
+
+    <related-content api-base='http://server.com'
+                     from-id='5'>
+    </related-content>
+
+    <related-content api-base='http://server.com'
+                     from-url='http://server.com/some-page'>
+    </related-content>
+
+    <related-content api-base='http://server.com'
+                     from-name='Luke Skywalker'>
+    </related-content>
+
+    <related-content api-base='http://server.com'></related-content>
+
+Priority `from-*` order:
+  - `from-id`
+  - `from-name`
+  - `from-url`
+
+If none of these attributes is provided `from-url` will default to window.location.href
+@demo demo/index.html
+@hero hero.svg
+-->
+
+<dom-module id="related-content">
+  <template>
+    <style>
+      :host {
+        display: inline-block;
+        box-sizing: border-box;
+        border: 1px solid black;
+        padding: 5px 10px;
+      }
+
+      .content {
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .content:last-of-type {
+        margin-bottom: 0;
+      }
+
+      .content img {
+        display: block;
+        margin-bottom: 5px;
+        width: 100%;
+      }
+    </style>
+
+    <iron-ajax
+        id="relatedContent"
+        handle-as="json"
+        loading="{{loading}}"
+        on-response="_onContentLoaded">
+    </iron-ajax>
+
+    <h2>Related Content</h2>
+    <template is="dom-if" if="{{loading}}">
+      <paper-progress indeterminate></paper-progress>
+    </template>
+    <template is="dom-if" if="{{!loading}}">
+      <template is="dom-repeat" items="{{content}}">
+        <div class="content">
+          <a href={{item.content.url}}>
+            <img src="{{item.content.image}}"
+                 alt="{{item.content.title}}"
+                 title="{{item.content.title}}" />
+            {{item.content.title}}
+          </a>
+        </div>
+      </template>
+    </template>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'related-content',
+      properties: {
+        /**
+         * The base url for the content-entity service
+         *
+         * @type string
+         */
+        apiBase: {
+          type: String,
+          value: "http://content-entity.service.sjc-dev.consul:31930"
+        },
+
+        /**
+         * The entity id to get related content for
+         *
+         * @type string
+         */
+        fromId: String,
+
+        /**
+         * The name of the entity to get related content for
+         *
+         * @type string
+         */
+        fromName: String,
+
+        /**
+         * The amount of content to fetch
+         * @type Number
+         */
+        limit: {
+          type: Number,
+          value: 5
+        },
+
+        /**
+         * The url of the page to get related content to, when the id is unknown
+         *
+         * @type string
+         */
+        fromUrl: {
+          type: String,
+          value: window.location.href
+        }
+      },
+      created: function() {
+      },
+      ready: function() {
+        this._getRelatedContent();
+      },
+      attached: function() {
+      },
+      detached: function() {
+      },
+      _getRelatedContent: function() {
+        this.$.relatedContent.params = {limit: this.limit + 1};
+
+        if (this.fromId !== undefined) {
+          this.$.relatedContent.url = this.apiBase + "/related-content/from-entity-id/" + this.fromId;
+        } else if (this.fromName != undefined) {
+          this.$.relatedContent.url = this.apiBase + "/related-content/from-entity-name/" + this.fromName;
+        } else {
+          this.$.relatedContent.url = this.apiBase + "/related-content/from-content-url";
+          this.$.relatedContent.params['contentUrl'] = this.fromUrl;
+        }
+
+        this.loading = true;
+        this.content = [];
+        this.$.relatedContent.generateRequest();
+      },
+      _onContentLoaded: function(e) {
+        var dummyLink = document.createElement('a');
+        this.content = e.detail.response.filter(function(item) {
+          dummyLink.href = item.content.url;
+          return dummyLink.pathname != window.location.pathname;
+        });
+
+        while (this.content.length > this.limit) {
+          this.content.pop();
+        }
+      }
+    });
+  </script>
+</dom-module>

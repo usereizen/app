@@ -1,0 +1,14 @@
+{
+  "name": "Wikia-app",
+  "description": "Main Wikia application",
+  "main": "",
+  "authors": [
+    "wikia engineering"
+  ],
+  "license": "",
+  "homepage": "https://github.com/Wikia/app",
+  "private": true,
+  "dependencies": {
+    "related-content": "git@github.com:Wikia/related-content-element.git"
+  }
+}

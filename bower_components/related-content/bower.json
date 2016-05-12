@@ -1,0 +1,24 @@
+{
+  "name": "related-content",
+  "version": "1.0.0",
+  "authors": [
+    "nmonterroso <nelson@wikia-inc.com>"
+  ],
+  "description": "",
+  "main": "related-content.html",
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "/.*",
+    "/test/"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.4.0",
+    "paper-progress": "^1.0.9",
+    "iron-ajax": "^1.2.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "web-component-tester": "^4.0.0"
+  }
+}
