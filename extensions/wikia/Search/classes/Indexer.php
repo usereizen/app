@@ -116,7 +116,8 @@ class Indexer
 	public function reindexBatch( array $documentIds = array() ) {
 		$documents = array();
 		foreach ($documentIds as $id ) {
-			$documents[] = $this->getSolrDocument( $id );
+			try {$documents[] = $this->getSolrDocument( $id );}
+ 			catch (Exception $e) { echo "Exception for article # $id \n"; }
 		}
 		return $this->updateDocuments( $documents );
 	}
