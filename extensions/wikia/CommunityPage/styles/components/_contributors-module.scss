@@ -19,11 +19,6 @@
 		}
 	}
 
-	.community-page-contributor-details {
-		line-height: $contributor-module-default-line-height;
-		vertical-align: middle;
-	}
-
 	.top-contributors, .top-admins {
 		font-size: 14px;
 		line-height: $contributor-module-default-line-height;
@@ -77,11 +72,59 @@
 		margin: 12px 0;
 	}
 
+	.community-page-contributors-list-item {
+		@include flexbox();
+		@include align-items(center);
+
+		border-bottom: 2px solid $color-page-border-subtle;
+		padding: 15px 0;
+
+		&:last-of-type {
+			border: 0;
+		}
+
+		.avatar-container {
+			@include flex($user-based-list-avatar-flex);
+		}
+
+		&.community-page-current-contributor {
+			border-color: $color-page-border;
+			font-weight: bold;
+		}
+
+		.community-page-contributor-rank {
+			padding-right: 5px;
+		}
+
+		.community-page-contributor-details {
+			@include flex(10 1 100%);
+
+			line-height: $contributor-module-default-line-height;
+			vertical-align: middle;
+		}
+
+		.community-page-details {
+			text-align: right;
+			white-space: nowrap;
+		}
+	}
+
+	.user-details {
+		background: $color-page-border-subtle;
+		border: 0;
+		margin: 0;
+		padding: 15px $modal-horizontal-padding;
+	}
+
 	&.ContributorsModuleModal {
 		padding: 0 0 24px;
 
 		> h2 {
 			display: none;
+		}
+
+		.top-contributors {
+			padding: 0 $modal-horizontal-padding;
 		}
 
 		.community-page-all-contributors-legend {
@@ -90,43 +133,6 @@
 			margin-top: 12px;
 			padding-right: 30px;
 			text-align: right;
-		}
-
-		.top-contributors {
-			padding: 0 $modal-horizontal-padding;
-		}
-
-		.community-page-contributors-list-item {
-			@include flexbox();
-			@include align-items(center);
-
-			border-bottom: 2px solid $color-page-border-subtle;
-			padding: 15px 0;
-
-			&:last-of-type {
-				border: 0;
-			}
-
-			.avatar-container {
-				@include flex($avatar-flex);
-			}
-
-			&.community-page-current-contributor {
-				border-color: $color-page-border;
-				font-weight: bold;
-			}
-
-			.community-page-details {
-				text-align: right;
-				white-space: nowrap;
-			}
-		}
-
-		.user-details {
-			background: $color-page-border-subtle;
-			border: 0;
-			margin: 0;
-			padding: 15px $modal-horizontal-padding;
 		}
 	}
 }

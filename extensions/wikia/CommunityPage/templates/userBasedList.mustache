@@ -1,0 +1,25 @@
+<li class="community-page-user-based-list-item">
+	{{#userAvatar}}
+		<div class="avatar-container">
+			<a data-tracking="user-avatar-link" href="{{userProfile}}">{{{userAvatar}}}</a>
+		</div>
+	{{/userAvatar}}
+	{{#count}}
+		<div class="community-page-list-count">
+			{{count}}.
+		</div>
+	{{/count}}
+	<div class="community-page-user-based-list-main">
+		{{{mainContent}}}
+		{{#additionalContent}}
+			<div class="community-page-user-based-list-additional">
+				{{{additionalContent}}}
+			</div>
+		{{/additionalContent}}
+	</div>
+	{{#details}}
+		<div class="community-page-user-based-list-details">
+			{{details}}
+		</div>
+	{{/details}}
+</li>

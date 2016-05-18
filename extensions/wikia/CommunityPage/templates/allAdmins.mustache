@@ -1,18 +1,6 @@
-<h2>{{allMembersHeaderText}}</h2>
-<ul class="reset top-contributors">
+<ul class="community-page-user-based-list">
 	{{#allAdminsList}}
-		<li class="community-page-contributors-list-item">
-			<div class="avatar-container">
-				<a data-tracking="all-admins-user-avatar" href="{{profilePage}}">{{{avatar}}}</a>
-			</div>
-			<div class="community-page-contributor-details">
-				<a data-tracking="all-admins-user" href="{{profilePage}}">{{userName}}</a>
-				{{#isAdmin}}
-					<span class="community-page-subtle">{{admin}}</span>
-				{{/isAdmin}}
-			</div>
-			<div class="community-page-details">{{contributionsText}}</div>
-		</li>
+		{{> userBasedList}}
 	{{/allAdminsList}}
 	{{^allAdminsList}}
 		<div class="community-page-zero">

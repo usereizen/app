@@ -107,7 +107,7 @@ class CommunityPageSpecialController extends WikiaSpecialPageController {
 	 */
 	public function getTopAdminsData() {
 		$allAdmins = $this->getAllAdmins();
-		$allAdminsDetails = $this->getContributorsDetails( $allAdmins );
+		$allAdminsDetails = $this->getContributorsDetails( $allAdmins, false, false );
 
 		$topAdminsTemplateData = CommunityPageSpecialTopAdminsFormatter::prepareData( $allAdminsDetails );
 		$templateMessages = [
@@ -126,7 +126,7 @@ class CommunityPageSpecialController extends WikiaSpecialPageController {
 	 */
 	public function getAllAdminsData() {
 		$allAdmins = $this->getAllAdmins();
-		$allAdminsDetails = $this->getContributorsDetails( $allAdmins );
+		$allAdminsDetails = $this->getContributorsDetails( $allAdmins, false, false );
 
 		$this->response->setData( [
 			'topAdminsHeaderText' => $this->msg( 'communitypage-admins' )->plain(),
@@ -215,26 +215,40 @@ class CommunityPageSpecialController extends WikiaSpecialPageController {
 	 * Get details for display of top contributors
 	 *
 	 * @param array $contributors List of contributors containing userId and contributions for each user
+	 * @param boolean $adminLabels Should include additional admin labels
 	 * @return array
 	 */
-	private function getContributorsDetails( $contributors ) {
+	private function getContributorsDetails( $contributors, $adminLabels = true, $displayRank = true ) {
 		$count = 0;
 
-		return array_map( function ( $contributor ) use ( &$count ) {
+		return array_map( function ( $contributor ) use ( &$count, $adminLabels, $displayRank ) {
 			$user = User::newFromId( $contributor['userId'] );
 			$userName = $user->getName();
+			$userProfile = $user->getUserPage()->getLocalURL();
 			$avatar = AvatarService::renderAvatar( $userName, AvatarService::AVATAR_SIZE_SMALL_PLUS );
 			$count += 1;
+			$mainContent = Html::element( 'a', [
+				'href' => $userProfile,
+				'data-tracking' => 'user-profile-link',
+			], $userName );
 
-			return [
-				'userName' => $userName,
-				'avatar' => $avatar,
-				'contributionsText' => $this->msg( 'communitypage-contributions' )
+			$details = [
+				'userAvatar' => $avatar,
+				'userProfile' => $userProfile,
+				'details' => $this->msg( 'communitypage-contributions' )
 					->numParams( $contributor['contributions'] )->text(),
-				'profilePage' => $user->getUserPage()->getLocalURL(),
-				'count' => $count,
-				'isAdmin' => $contributor['isAdmin'],
+				'mainContent' => $mainContent,
 			];
+
+			if ( $displayRank ) {
+				$details['count'] = $count;
+			}
+
+			if ( $adminLabels && $contributor['isAdmin'] ) {
+				$details['additionalContent'] = $this->msg( 'communitypage-admin' )->plain();
+			}
+
+			return $details;
 		} , $contributors );
 	}
 

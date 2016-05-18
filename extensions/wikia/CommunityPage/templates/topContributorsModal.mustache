@@ -14,21 +14,7 @@
 </div>
 <ul class="reset top-contributors">
 	{{#contributors}}
-		<li class="community-page-contributors-list-item">
-			<div class="avatar-container">
-				<a data-tracking="top-contributors-user-avatar" href="{{profilePage}}">{{{avatar}}}</a>
-			</div>
-			<div class="community-page-contributor-rank">
-				{{count}}.
-			</div>
-			<div class="community-page-contributor-details">
-				<a data-tracking="top-contributors-user" href="{{profilePage}}">{{userName}}</a>
-				{{#isAdmin}}
-					<span class="community-page-subtle">{{admin}}</span>
-				{{/isAdmin}}
-			</div>
-			<div class="community-page-details">{{contributionsText}}</div>
-		</li>
+		{{> userBasedList}}
 	{{/contributors}}
 	{{^contributors}}
 		<div class="community-page-zero">

@@ -13,6 +13,10 @@
 		display: none;
 	}
 
+	.ContributorsModuleModal {
+		padding: $modal-horizontal-padding;
+	}
+
 	.modal-nav {
 		padding: $modal-top-padding $modal-horizontal-padding 0 0;
 

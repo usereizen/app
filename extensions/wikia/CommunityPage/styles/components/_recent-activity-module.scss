@@ -4,7 +4,7 @@
 
 .RecentActivityModule {
 	.avatar-container {
-		@include flex($avatar-flex);
+		@include flex($user-based-list-avatar-flex);
 
 		margin: $avatar-margin;
 	}

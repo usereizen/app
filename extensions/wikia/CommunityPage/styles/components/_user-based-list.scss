@@ -1,0 +1,53 @@
+@import 'skins/shared/color';
+@import 'skins/shared/mixins/flexbox';
+@import 'variables';
+
+ul.community-page-user-based-list {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+
+li.community-page-user-based-list-item {
+	@include flexbox();
+	@include align-items(flex-start);
+
+	margin: 0;
+	padding: $user-based-list-item-padding;
+
+	&.community-page-user-based-list-item-bordered {
+		border-bottom: $user-based-list-border;
+		padding: $user-based-list-item-bordered-padding;
+	}
+}
+
+.avatar-container {
+	@include flex($user-based-list-avatar-flex);
+}
+
+.community-page-list-count {
+	padding-top: $user-based-list-centralizing-padding-top;
+	padding-right: 6px;
+}
+
+.community-page-user-based-list-main {
+	@include flex($user-based-list-main-flex);
+
+	line-height: $user-based-list-line-height;
+	padding-top: $user-based-list-centralizing-padding-top;
+}
+
+.community-page-user-based-list-additional {
+	color: $color-alternate-text;
+	font-size: 12px;
+	line-height: 16px;
+}
+
+.community-page-user-based-list-details {
+	color: $color-alternate-text;
+	font-size: 12px;
+	line-height: $user-based-list-line-height;
+	margin-left: auto;
+	padding-top: $user-based-list-centralizing-padding-top;
+	white-space: nowrap;
+}

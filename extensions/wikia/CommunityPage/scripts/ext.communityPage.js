@@ -117,7 +117,9 @@ require([
 
 				allAdminsCount = response.allAdminsCount;
 
-				tab.cachedData = mustache.render(templates[tab.template], response);
+				tab.cachedData = mustache.render(templates[tab.template], response, {
+					userBasedList: templates['userBasedList'],
+				});
 				$deferred.resolve(tab.cachedData);
 			}, function (error) {
 				$deferred.resolve(mustache.render(templates.loadingError, {

@@ -1,11 +1,22 @@
+@import 'skins/shared/color';
+
 // fonts
 $community-page-font-family: "HelveticaNeue", Helvetica, Arial, sans-serif;
 
 // Contributor module
 $contributor-module-default-line-height: 20px;
 $avatar-size: 30px;
-$avatar-flex: 0 0 $avatar-size;
 $avatar-margin: 0 10px 0 0;
+
+// User based list
+$user-based-list-border: 1px solid $color-page-border-subtle;
+$user-based-list-item-padding: 12px 0 0;
+$user-based-list-item-bordered-padding: 12px 0;
+$user-based-list-line-height: 22px;
+$user-based-list-centralizing-padding-top: 6px;
+$user-based-list-avatar-flex: 0 0 $avatar-size;
+$user-based-list-count-padding: 0 6px 0 0;
+$user-based-list-main-flex: 10 1 100%;
 
 // other
 $modal-horizontal-padding: 25px;

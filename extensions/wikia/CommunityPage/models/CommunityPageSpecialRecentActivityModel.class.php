@@ -19,12 +19,12 @@ class CommunityPageSpecialRecentActivityModel {
 				$userProfileLink, $changeTypeString, $pageLink )->plain();
 
 			$recentActivity[] = [
-				'timeAgo' => $activity['time_ago'],
-				'profilePage' => $activity['user_profile_url'],
+				'userProfile' => $activity['user_profile_url'],
 				'userAvatar' => AvatarService::renderAvatar(
 					$activity['user_name'],
 					AvatarService::AVATAR_SIZE_SMALL_PLUS ),
-				'changeMessage' => $changeMessage,
+				'mainContent' => $changeMessage,
+				'additionalContent' => $activity['time_ago'],
 			];
 		}
 

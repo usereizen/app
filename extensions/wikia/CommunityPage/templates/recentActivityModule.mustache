@@ -1,23 +1,9 @@
 {{#recentActivityModule}}
 	<div class="module RecentActivityModule">
 		<h2 class="activity-heading">{{activityHeading}}</h2>
-		<ul class="reset recent-changes">
+		<ul class="community-page-user-based-list">
 			{{#activity}}
-				<li class="community-page-recent-activity-item">
-					<div class="avatar-container">
-						<a data-tracking="user-avatar-link" href="{{profilePage}}">{{{userAvatar}}}</a>
-					</div>
-					<div class="community-page-recent-activity-item-info">
-						<div class="change-message">
-							{{{changeMessage}}}
-						</div>
-						{{#timeAgo}}
-							<div class="community-page-subtle">
-								{{timeAgo}}
-							</div>
-						{{/timeAgo}}
-					</div>
-				</li>
+				{{> userBasedList}}
 			{{/activity}}
 		</ul>
 		<a data-tracking="view-all-activity-link" href="{{moreActivityLink}}">{{moreActivityText}}</a>
