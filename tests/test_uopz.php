@@ -105,24 +105,15 @@ switch ($TEST) {
 		(new yyy1())->test();
 		(new yyy2())->test();
 		(new xyz3())->test();
-		uopz_function('xyz1','test2',uopz_copy('xyz1','test'));
-		uopz_backup('xyz1','test');
-		uopz_function('xyz1','test',function() {
+		uopz_set_return('xyz1','test',function() {
 			echo "mocked xyz1->test()\n";
-		});
+		}, true);
 		(new yyy1())->test();
 		(new yyy2())->test();
 		(new xyz3())->test();
-		(new yyy1())->test2();
-		(new yyy2())->test2();
-		(new xyz3())->test2();
-		uopz_restore('xyz1','test');
-		uopz_delete('xyz1','test2');
+		uopz_unset_return('xyz1','test');
 		(new yyy1())->test();
 		(new yyy2())->test();
 		(new xyz3())->test();
-		(new yyy1())->test2();
-		(new yyy2())->test2();
-		(new xyz3())->test2();
 		break;
 }
