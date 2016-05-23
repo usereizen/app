@@ -26,7 +26,7 @@ class TestAncestry1 {
 
 class TestAncestry2 {
 	public function test() {
-		echo __METHOD__ . PHP_EOL;
+		echo "original " . __METHOD__ . PHP_EOL;
 	}
 }
 
@@ -93,12 +93,13 @@ switch ($TEST) {
 		call_static();
 		break;
 	case 'ancestry':
-		uopz_function('TestAncestry2', 'test', function() {
+		uopz_set_return('TestAncestry2', 'test', function() {
 			echo "mocked TestAncestry2->test()\n";
-		});
+		}, true);
 		(new TestAncestry2())->test();
-//		(new TestAncestry1())->test();
 
+		uopz_unset_return('TestAncestry2', 'test');
+		(new TestAncestry2())->test();
 		break;
 	case 'deep':
 		(new yyy1())->test();
