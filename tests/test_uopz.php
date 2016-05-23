@@ -1,12 +1,11 @@
 <?php
 
+# needs to be run using "php -d xdebug.coverage_enable=0 test_uopz.php new" in make uopz happy
+
+ini_set('display_errors', 1);
+
 $TEST = $argv[1];
 $OPT = @$argv[2];
-class Overloader {
-	static public function overload( &$className ) {
-		if ($className == 'a') $className = new b();
-	}
-}
 
 class a {}
 class b {}
@@ -44,12 +43,18 @@ class yyy3 extends xyz3 {}
 
 switch ($TEST) {
 	case 'new':
-		uopz_overload( ZEND_NEW, 'Overloader::overload' );
+		uopz_set_mock( a::class, b::class );
+
+		assert( uopz_get_mock( a::class ) == b::class );
 
 		$x = new a();
 		var_dump( $x );
 
-		uopz_overload( ZEND_NEW, null );
+		assert( $x instanceof b );
+
+		uopz_unset_mock( a::class );
+
+		assert( new a() instanceof a );
 		break;
 	case 'static':
 	case 'static2':
