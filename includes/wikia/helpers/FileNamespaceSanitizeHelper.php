@@ -37,7 +37,19 @@ class FileNamespaceSanitizeHelper {
 					$fileNamespaces [] = $alias;
 				}
 			}
-			$this->filePrefixRegex[ $langCode ] = '^(' . implode( '|', $fileNamespaces ) . '):';
+			
+			//be able to match user-provided file namespaces that may contain both underscores and spaces
+			$fileNamespaces = array_map( function( $namespace ) {
+				return mb_ereg_replace( '_', '(_|\ )', $namespace );
+			}, $fileNamespaces );
+
+			//be able to match both upper- and lowercase first letters of the namespace
+			$lowercaseFileNamespaces = array_map( function( $namespace ) {
+				return mb_convert_case( $namespace, MB_CASE_LOWER, "UTF-8" );
+			}, $fileNamespaces );
+
+			$namespaces = array_merge( $fileNamespaces, $lowercaseFileNamespaces );
+			$this->filePrefixRegex[ $langCode ] = '^(' . implode( '|', $namespaces ) . '):';
 		}
 
 		return $this->filePrefixRegex[ $langCode ];
@@ -89,11 +101,12 @@ class FileNamespaceSanitizeHelper {
 		$trimmedFilename = trim( $potentialFilename, "[]" );
 		$unprefixedFilename = mb_ereg_replace( $filePrefixRegex, "", $trimmedFilename );
 		$filenameParts = explode( '|', $unprefixedFilename );
-		if ( !empty( $filenameParts[ 0 ] ) ) {
-			return urldecode( $filenameParts[0] );
+
+		if ( !empty( $filenameParts[0] ) ) {
+			return rawurldecode( $filenameParts[0] );
 		}
 
-		return null;
+		return self::removeImageParams( $unprefixedFilename );
 	}
 
 	/**
@@ -108,5 +121,37 @@ class FileNamespaceSanitizeHelper {
 		$wikitext = preg_replace( '/\[\[' . $filePrefixRegex .'.*\]\]/U', '', $wikitext );
 
 		return $wikitext;
+	}
+
+	/**
+	 * @desc for a given wikitext, return an array of images or files occurences,
+	 * without brackets and without any params
+	 *
+	 * @param string $wikitext to find images or files in
+	 * @param $lang
+	 * @return array of images ['File:sefes', 'File:blabla']
+	 * or false if no images found
+	 */
+	public function getCleanFileMarkersFromWikitext( $wikitext, $lang ) {
+		$filePrefixRegex = substr( $this->getFilePrefixRegex( $lang ), 1 );
+		preg_match_all( '/\[\[(' . $filePrefixRegex .'[^|\]]*).*?\]\]/', $wikitext, $images );
+
+		return count( $images[1] ) ? $images[1] : false;
+	}
+
+	/**
+	 * @desc for given file wikitext without brackets, return it without any params
+	 * or null if empty string
+	 *
+	 * @param $fileWikitext
+	 * @return string | null
+	 */
+	public function removeImageParams( $fileWikitext ) {
+		$filenameParts = explode( '|', $fileWikitext );
+		if ( empty( $filenameParts[0] ) ) {
+			return null;
+		}
+
+		return urldecode( $filenameParts[0] );
 	}
 }

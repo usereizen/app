@@ -61,25 +61,28 @@
 <?= $headItems ?>
 
 </head>
-<body class="<?= implode(' ', $bodyClasses) ?>"<?= $itemType ?>>
+<body class="<?= implode(' ', $bodyClasses) ?>" <?= $itemType ?>>
 <? if ( BodyController::isResponsiveLayoutEnabled() || BodyController::isOasisBreakpoints() ): ?>
 	<div class="background-image-gradient"></div>
 <? endif ?>
 
 <?= $comScore ?>
 <?= $quantServe ?>
-<?= $googleAnalytics ?>
+<?= $rubiconFastlane ?>
 <?= $amazonMatch ?>
 <?= $openXBidder ?>
+<?= $krux ?>
 <?= $dynamicYield ?>
+<?= $ivw3 ?>
 <?= $ivw2 ?>
 <div class="WikiaSiteWrapper">
 	<?= $body ?>
 
 	<?php
 		echo F::app()->renderView('Ad', 'Index', ['slotName' => 'GPT_FLUSH', 'pageTypes' => ['*']]);
+		echo F::app()->renderView('Ad', 'Index', ['slotName' => 'EVOLVE_FLUSH', 'pageTypes' => ['*']]);
+		echo F::app()->renderView('Ad', 'Index', ['slotName' => 'HITMEDIA_FLUSH', 'pageTypes' => ['*']]);
 		echo F::app()->renderView('Ad', 'Index', ['slotName' => 'TURTLE_FLUSH', 'pageTypes' => ['*']]);
-		echo F::app()->renderView('Ad', 'Index', ['slotName' => 'SEVENONEMEDIA_FLUSH', 'pageTypes' => ['*']]);
 	?>
 </div>
 <? if( $jsAtBottom ): ?>
@@ -96,11 +99,10 @@
 <? endif ?>
 
 <script type="text/javascript">/*<![CDATA[*/ Wikia.LazyQueue.makeQueue(wgAfterContentAndJS, function(fn) {fn();}); wgAfterContentAndJS.start(); /*]]>*/</script>
-<?php if ($wg->EnableAdEngineExt) { ?>
 <script type="text/javascript">/*<![CDATA[*/ if (typeof AdEngine_trackPageInteractive === 'function') {wgAfterContentAndJS.push(AdEngine_trackPageInteractive);} /*]]>*/</script>
-<?php } ?>
 <?= $bottomScripts ?>
 
+<?= $nielsen ?>
 </body>
 
 <?= wfReportTime() . "\n" ?>

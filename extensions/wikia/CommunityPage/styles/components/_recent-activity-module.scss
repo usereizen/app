@@ -1,0 +1,29 @@
+@import 'variables';
+@import 'skins/shared/mixins/clearfix';
+@import 'skins/shared/mixins/flexbox';
+
+.RecentActivityModule {
+	.avatar-container {
+		@include flex($avatar-flex);
+
+		margin: $avatar-margin;
+	}
+
+	.recent-changes {
+		font-size: 14px;
+		line-height: 20px;
+		margin: 6px 0 0;
+	}
+
+	.community-page-recent-activity-item {
+		@include clearfix;
+		@include flexbox();
+		@include align-items(flex-start);
+
+		padding-bottom: 12px;
+	}
+
+	.community-page-recent-activity-item-info {
+		padding-top: 6px;
+	}
+}

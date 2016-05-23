@@ -2,18 +2,16 @@
 
 namespace Wikia\PortableInfobox\Helpers;
 
-use \Wikia\Logger\WikiaLogger;
+use Wikia\Logger\WikiaLogger;
 
 class PortableInfoboxRenderServiceHelper {
 	const LOGGER_LABEL = 'portable-infobox-render-not-supported-type';
-	//todo: https://wikia-inc.atlassian.net/browse/DAT-3075
-	//todo: figure out what to do when user changes default infobox width via custom theming
-	const DESKTOP_THUMBNAIL_WIDTH = 270;
+	const DEFAULT_DESKTOP_THUMBNAIL_WIDTH = 270;
+	const EUROPA_THUMBNAIL_WIDTH = 300;
 	const MOBILE_THUMBNAIL_WIDTH = 360;
 	const MINIMAL_HERO_IMG_WIDTH = 300;
 	const MAX_DESKTOP_THUMBNAIL_HEIGHT = 500;
-
-	function __construct() {}
+	const EUROPA_THEME_NAME = 'pi-theme-europa';
 
 	/**
 	 * creates special data structure for horizontal group from group data
@@ -23,8 +21,8 @@ class PortableInfoboxRenderServiceHelper {
 	 */
 	public function createHorizontalGroupData( $groupData ) {
 		$horizontalGroupData = [
-			'labels' => [],
-			'values' => [],
+			'labels' => [ ],
+			'values' => [ ],
 			'renderLabels' => false
 		];
 
@@ -38,7 +36,7 @@ class PortableInfoboxRenderServiceHelper {
 				if ( !empty( $data[ 'label' ] ) ) {
 					$horizontalGroupData[ 'renderLabels' ] = true;
 				}
-			} else if ( $item[ 'type' ] === 'header' ) {
+			} elseif ( $item[ 'type' ] === 'header' ) {
 				$horizontalGroupData[ 'header' ] = $data[ 'value' ];
 			}
 		}
@@ -47,79 +45,71 @@ class PortableInfoboxRenderServiceHelper {
 	}
 
 	/**
-	 * check if infobox item is a title, title inside the hero module or a label
-	 * and if so, remove from it HTML tags.
-	 * If label after sanitization is empty- contain only image- do not
-	 * sanitize it.
-	 *
-	 * @param string $type type of infobox item
-	 * @param array $data infobox item data
-	 * @return array infobox $data with sanitized title param if needed
-	 */
-	public function sanitizeInfoboxFields( $type, $data ) {
-		if ( $type === 'data' ) {
-			$sanitizedLabel = $this->sanitizeElementData( $data[ 'label' ], '<a>' );
-
-			if ( !empty( $sanitizedLabel) ) {
-				$data[ 'label' ] = $sanitizedLabel;
-			}
-		} else if ( $type === 'horizontal-group-content' ) {
-			foreach ( $data[ 'labels' ] as $key => $label ) {
-				$sanitizedLabel = $this->sanitizeElementData( $label, '<a>' );
-				if ( !empty( $sanitizedLabel ) ) {
-					$data[ 'labels' ][ $key ] = $sanitizedLabel;
-				}
-			}
-		} else if ( $type === 'title' ) {
-			$data[ 'value' ] = $this->sanitizeElementData( $data[ 'value' ] );
-		} else if ( $type === 'hero-mobile' && !empty( $data[ 'title' ][ 'value' ] ) ) {
-			$data[ 'title' ][ 'value' ] = $this->sanitizeElementData( $data[ 'title' ][ 'value' ] );
-		}
-
-		return $data;
-	}
-
-	/**
-	 * process single title or label
-	 *
-	 * @param $elementText
-	 * @param string $allowedTags
-	 * @return string
-	 */
-	private function sanitizeElementData( $elementText, $allowedTags = null ) {
-		$elementTextAfterTrim = trim( strip_tags( $elementText, $allowedTags ) );
-
-		if ( $elementTextAfterTrim !== $elementText ) {
-			WikiaLogger::instance()->info( 'Striping HTML tags from infobox element' );
-			$elementText = $elementTextAfterTrim;
-		}
-		return $elementText;
-	}
-
-	/**
 	 * extends image data
 	 *
-	 * @param array $data
-	 *
-	 * @return bool|array
+	 * @param array $data image data
+	 * @param int $width preferred thumbnail width
+	 * @return array|bool false on failure
 	 */
-	public function extendImageData( $data ) {
-		$thumbnail = $this->getThumbnail( $data[ 'name' ] );
-		$ref = null;
+	public function extendImageData( $data, $width ) {
+		global $wgPortableInfoboxCustomImageWidth;
 
-		if ( !$thumbnail ) {
+		// title param is provided through reference in WikiaFileHelper::getFileFromTitle
+		$title = $data[ 'name' ];
+		$file = \WikiaFileHelper::getFileFromTitle( $title );
+		if ( !$file || !$file->exists() ) {
 			return false;
 		}
+		// get dimensions
+		$originalWidth = $file->getWidth();
+		$dimensions = $this->getThumbnailSizes(
+			$width, self::MAX_DESKTOP_THUMBNAIL_HEIGHT, $originalWidth, $file->getHeight() );
+		// if custom and big enough, scale thumbnail size
+		$ratio = !empty( $wgPortableInfoboxCustomImageWidth ) && $originalWidth > $wgPortableInfoboxCustomImageWidth ?
+			$wgPortableInfoboxCustomImageWidth / $dimensions[ 'width' ] : 1;
+		// get thumbnail
+		$thumbnail = $file->transform( [
+			'width' => round( $dimensions[ 'width' ] * $ratio ),
+			'height' => round( $dimensions[ 'height' ] * $ratio )
+		] );
+		if ( !$thumbnail || $thumbnail->isError() ) {
+			return false;
+		}
+		$ref = null;
 
 		wfRunHooks( 'PortableInfoboxRenderServiceHelper::extendImageData', [ $data, &$ref ] );
 
-		$data[ 'ref' ] = $ref;
-		$data[ 'height' ] = $thumbnail->getHeight();
-		$data[ 'width' ] = $thumbnail->getWidth();
-		$data[ 'thumbnail' ] = $thumbnail->getUrl();
-		$data[ 'key' ] = urlencode( $data[ 'key' ] );
-		$data[ 'media-type' ] = $data[ 'isVideo' ] ? 'video' : 'image';
+		return array_merge( $data, [
+			'ref' => $ref,
+			'height' => $dimensions[ 'height' ],
+			'width' => $dimensions[ 'width' ],
+			'thumbnail' => $thumbnail->getUrl(),
+			'key' => urlencode( $data[ 'key' ] ),
+			'media-type' => $data[ 'isVideo' ] ? 'video' : 'image',
+			'mercuryComponentAttrs' => json_encode( [
+				'itemContext' => 'portable-infobox',
+				'ref' => $ref
+			] )
+		] );
+	}
 
+	/**
+	 * @param array $images
+	 * @return array
+	 */
+	public function extendImageCollectionData( $images ) {
+		$mercuryComponentAttrs = [
+			'refs' => array_map( function ( $image ) {
+				return $image['ref'];
+			}, $images )
+		];
+		$images[0]['isFirst'] = true;
+		$data = [
+			'images' => $images,
+			'firstImage' => $images[0],
+			'mercuryComponentAttrs' => json_encode( $mercuryComponentAttrs )
+		];
+		
 		return $data;
 	}
 
@@ -154,8 +144,17 @@ class PortableInfoboxRenderServiceHelper {
 	 * required for testing mobile template rendering
 	 * @return bool
 	 */
-	public function isWikiaMobile() {
+	public function isMobile() {
 		return \F::app()->checkSkin( 'wikiamobile' );
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isMercury() {
+		global $wgArticleAsJson;
+		
+		return !empty( $wgArticleAsJson );
 	}
 
 	/**
@@ -181,8 +180,39 @@ class PortableInfoboxRenderServiceHelper {
 	}
 
 	/**
+	 * Checks if europa theme is enabled and used
+	 * @return bool
+	 */
+	public function isEuropaTheme() {
+		global $wgEnablePortableInfoboxEuropaTheme;
+
+		return !empty( $wgEnablePortableInfoboxEuropaTheme );
+	}
+
+	/**
+	 * Calculates image dimensions based on preferred width and max acceptable height
+	 *
+	 * @param int $preferredWidth
+	 * @param int $maxHeight
+	 * @param int $originalWidth
+	 * @param int $originalHeight
+	 * @return array [ 'width' => int, 'height' => int ]
+	 */
+	public function getThumbnailSizes( $preferredWidth, $maxHeight, $originalWidth, $originalHeight ) {
+		if ( ( $originalHeight / $originalWidth ) > ( $maxHeight / $preferredWidth ) ) {
+			$height = min( $maxHeight, $originalHeight );
+			$width = min( $preferredWidth, $height * $originalWidth / $originalHeight );
+		} else {
+			$width = min( $preferredWidth, $originalWidth );
+			$height = min( $maxHeight, $width * $originalHeight / $originalWidth );
+		}
+
+		return [ 'height' => round( $height ), 'width' => round( $width ) ];
+	}
+
+	/**
 	 * return real width of the image.
-	 * @param Title $title
+	 * @param \Title $title
 	 * @return int number
 	 */
 	private function getFileWidth( $title ) {
@@ -191,44 +221,5 @@ class PortableInfoboxRenderServiceHelper {
 		if ( $file ) {
 			return $file->getWidth();
 		}
-	}
-
-	/**
-	 * @desc create a thumb of the image from file title.
-	 * @param Title $title
-	 * @return bool|MediaTransformOutput
-	 */
-	private function getThumbnail( $title ) {
-		$file = \WikiaFileHelper::getFileFromTitle( $title );
-
-		if ( $file ) {
-			$size = $this->getAdjustedImageSize( $file );
-			$thumb = $file->transform( $size );
-
-			if ( !is_null( $thumb ) && !$thumb->isError() ) {
-				return $thumb;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * @desc get image size according to the width and height limitations:
-	 * Height on desktop cannot be bigger than 500px
-	 * Width have to be adjusted to const for mobile or desktop infobox
-	 * @param $image
-	 * @return array width and height
-	 */
-	public function getAdjustedImageSize( $image ) {
-		if ( $this->isWikiaMobile() ) {
-			$width = self::MOBILE_THUMBNAIL_WIDTH;
-			$height = null;
-		} else {
-			$height = min( self::MAX_DESKTOP_THUMBNAIL_HEIGHT, $image->getHeight() );
-			$width = self::DESKTOP_THUMBNAIL_WIDTH;
-		}
-
-		return [ 'height' => $height, 'width' => $width ];
 	}
 }

@@ -1,7 +1,8 @@
 <?php
 
 class TemplateTypesParser {
-	private static $cachedTemplateTitles = [];
+	private static $cachedTemplateTitles = [ ];
+
 	/**
 	 * @desc alters template raw text parser output based on template type
 	 *
@@ -11,23 +12,63 @@ class TemplateTypesParser {
 	 * @return bool
 	 */
 	public static function onFetchTemplateAndTitle( &$text, &$finalTitle ) {
+		global $wgEnableReferencesTemplateParsing,
+			   $wgEnableNavboxTemplateParsing,
+			   $wgEnableNoticeTemplateParsing,
+			   $wgEnableNavigationTemplateParsing;
+
 		wfProfileIn( __METHOD__ );
 
 		if ( self::shouldTemplateBeParsed() ) {
 			$type = self::getTemplateType( $finalTitle );
 
 			switch ( $type ) {
-				case AutomaticTemplateTypes::TEMPLATE_NAVBOX:
 				case TemplateClassificationService::TEMPLATE_NAVBOX:
-					$text = NavboxTemplate::handle();
+					if ( $wgEnableNavboxTemplateParsing ) {
+						$text = NavboxTemplate::handle( $text );
+					}
 					break;
 				case TemplateClassificationService::TEMPLATE_FLAG:
-					$text = NoticeTemplate::handleNoticeTemplate();
+					if ( $wgEnableNoticeTemplateParsing ) {
+						$text = NoticeTemplate::handle();
+					}
 					break;
-				case AutomaticTemplateTypes::TEMPLATE_REFERENCES:
 				case TemplateClassificationService::TEMPLATE_REFERENCES:
-					$text = ReferencesTemplate::handle();
+					if ( $wgEnableReferencesTemplateParsing ) {
+						$text = ReferencesTemplate::handle( $text );
+					}
 					break;
+				case TemplateClassificationService::TEMPLATE_NAV:
+					if ( $wgEnableNavigationTemplateParsing ) {
+						$text = NavigationTemplate::handle( $text );
+					}
+					break;
+			}
+		}
+
+		wfProfileOut( __METHOD__ );
+
+		return true;
+	}
+
+
+	/**
+	 * @desc run resolve methods after whole article was parsed
+	 *
+	 * @param $parser
+	 * @param $html
+	 * @return bool
+	 */
+	public static function onParserAfterTidy( $parser, &$html ) {
+		global $wgEnableNavigationTemplateParsing, $wgEnableNavboxTemplateParsing;
+		wfProfileIn( __METHOD__ );
+
+		if ( self::shouldTemplateBeParsed() ) {
+			if ( $wgEnableNavigationTemplateParsing ) {
+				NavigationTemplate::resolve( $html );
+			}
+			if ( $wgEnableNavboxTemplateParsing ) {
+				NavboxTemplate::resolve( $html );
 			}
 		}
 
@@ -52,16 +93,14 @@ class TemplateTypesParser {
 
 		if ( self::shouldTemplateBeParsed() && !is_null( $args ) ) {
 			$type = self::getTemplateType( $title );
-			$templateArgs = TemplateArgsHelper::getTemplateArgs( $args, $frame );
 
-			if ( $type === AutomaticTemplateTypes::TEMPLATE_SCROLLBOX && $wgEnableScrollboxTemplateParsing ) {
+			if ( $type === TemplateClassificationService::TEMPLATE_SCROLLBOX && $wgEnableScrollboxTemplateParsing ) {
+				$templateArgs = TemplateArgsHelper::getTemplateArgs( $args, $frame );
 				$outputText = ScrollboxTemplate::getLongestElement( $templateArgs );
 			}
 
-			if ( ( $type === AutomaticTemplateTypes::TEMPLATE_QUOTE ||
-				$type === TemplateClassificationService::TEMPLATE_QUOTE ) &&
-				$wgEnableQuoteTemplateParsing
-			) {
+			if ( $type === TemplateClassificationService::TEMPLATE_QUOTE && $wgEnableQuoteTemplateParsing ) {
+				$templateArgs = TemplateArgsHelper::getTemplateArgs( $args, $frame );
 				$outputText = QuoteTemplate::execute( $templateArgs );
 			}
 		}
@@ -79,16 +118,19 @@ class TemplateTypesParser {
 	 *
 	 * @return bool
 	 */
-	public static function onEndBraceSubstitution( $templateTitle, &$templateWikitext ) {
+	public static function onEndBraceSubstitution( $templateTitle, &$templateWikitext, &$parser ) {
+		global $wgEnableContextLinkTemplateParsing, $wgEnableInfoIconTemplateParsing;
 		wfProfileIn( __METHOD__ );
 
-		if ( ContextLinkTemplate::shouldTemplateBeProcessed( $templateWikitext ) ) {
+		if ( self::isSuitableForProcessing( $templateWikitext ) ) {
 			$title = self::getValidTemplateTitle( $templateTitle );
 
 			if ( $title ) {
 				$type = self::getTemplateType( $title );
-				if ( $type == AutomaticTemplateTypes::TEMPLATE_CONTEXT_LINK ) {
+				if ( $wgEnableContextLinkTemplateParsing && $type == TemplateClassificationService::TEMPLATE_CONTEXT_LINK ) {
 					$templateWikitext = ContextLinkTemplate::handle( $templateWikitext );
+				} elseif ( $wgEnableInfoIconTemplateParsing && $type == TemplateClassificationService::TEMPLATE_INFOICON ) {
+					$templateWikitext = InfoIconTemplate::handle( $templateWikitext, $parser );
 				}
 			}
 		}
@@ -127,11 +169,24 @@ class TemplateTypesParser {
 	}
 
 	/**
+	 * @desc check if template content is worth processing
+	 *
+	 * @param $wikitext
+	 * @return bool
+	 */
+	private static function isSuitableForProcessing( $wikitext ) {
+		return self::shouldTemplateBeParsed()
+			   && !empty( $wikitext )
+			   && !TemplateArgsHelper::containsUnexpandedArgs( $wikitext );
+	}
+
+	/**
 	 * @desc return a valid cached Title object for a given template title string
 	 * or if not in cache yet check it's correctness and save there valid Title
 	 * object or false if templateTitle invalid
 	 *
 	 * @param string $templateTitle
+	 *
 	 * @return Title | bool
 	 * @throws \MWException
 	 */
@@ -140,6 +195,7 @@ class TemplateTypesParser {
 			$title = Title::newFromText( $templateTitle, NS_TEMPLATE );
 			self::$cachedTemplateTitles[ $templateTitle ] = ( $title && $title->exists() ) ? $title : false;
 		}
+
 		return self::$cachedTemplateTitles[ $templateTitle ];
 	}
 }

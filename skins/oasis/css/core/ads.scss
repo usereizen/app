@@ -7,11 +7,14 @@
 @import 'skins/shared/mixins/transform';
 @import 'ads-floor';
 @import 'ads-in-content';
+@import 'ads-interstitial';
+@import 'ads-invisible-high-impact';
 
 $wikia-top-ads-index: 2;
+$taboola-small-breakpoint: "#{$screen} and (max-width: 420px)";
 
 /** Hide invisible slots and 1x1 iframes **/
-.wikia-ad[id^="INVISIBLE_"],
+#INVISIBLE_SKIN,
 .wikia-ad.hidden,
 .wikia-ad .hidden {
 	display: none !important;
@@ -64,6 +67,49 @@ $wikia-top-ads-index: 2;
 	}
 }
 
+#TOP_LEADERBOARD_AB {
+	background: rgba($color-page, $page-opacity);
+	max-width: $page-width-medium;
+	margin: 10px auto;
+	padding: 0 $padding-width-medium;
+	position: relative;
+	z-index: $wikia-top-ads-index;
+
+	.thumbnails-h-abp {
+		border: none;
+		padding: 10px 0 0;
+	}
+}
+
+@if $widthType == 0 {
+	@media #{$breakpoint-small-only} {
+		#TOP_LEADERBOARD_AB {
+			padding: 0 $padding-width-small;
+			width: $page-width-small - 2 * $content-border-width;
+		}
+	}
+
+	@media #{$breakpoint-medium-only} {
+		#TOP_LEADERBOARD_AB {
+			padding: 0 $padding-width-medium;
+			width: $page-width-medium;
+		}
+	}
+
+	@media #{$breakpoint-large-up} {
+		#TOP_LEADERBOARD_AB {
+			padding: 0 $padding-width-large;
+			width: $page-width-large;
+		}
+	}
+
+	@media #{$taboola-small-breakpoint} {
+		#TOP_LEADERBOARD_AB {
+			width: auto;
+		}
+	}
+}
+
 /** Skyscrapers **/
 @media #{$breakpoint-small-plus-up} {
 	#WikiaRail.left-skyscraper-3-present {
@@ -71,8 +117,36 @@ $wikia-top-ads-index: 2;
 	}
 }
 
+#INCONTENT_LEADERBOARD {
+	text-align: center;
+	>div {
+		margin-left: auto;
+		margin-right: auto;
+	}
+}
+
+#INCONTENT_WRAPPER {
+  text-align: center;
+}
+
+#INCONTENT_LEADERBOARD {
+  display: inline-block;
+}
+
+#INCONTENT_LEADERBOARD:before {
+  color: $color-text;
+  content: attr(data-label);
+  display: block;
+  font-size: 0.625rem;
+  line-height: 0.75rem;
+  padding-bottom: 6px;
+  padding-top: 6px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
 #LEFT_SKYSCRAPER_2 {
-	margin-bottom: 20px;
+	margin-bottom: 10px;
 	font-size: 0;
 	text-align: center;
 	> div, > iframe {
@@ -83,8 +157,10 @@ $wikia-top-ads-index: 2;
 #LEFT_SKYSCRAPER_3 {
 	clear: both;
 	position: absolute;
-	right: 70px;
-	top: -640px;
+	right: 0;
+	text-align: center;
+	top: -600px;
+	width: 300px;
 }
 
 /** Box ads **/
@@ -127,7 +203,7 @@ $wikia-top-ads-index: 2;
 	height: 250px;
 }
 
-#PREFOOTER_LEFT_BOXAD, #PREFOOTER_RIGHT_BOXAD {
+#PREFOOTER_LEFT_BOXAD, #PREFOOTER_MIDDLE_BOXAD, #PREFOOTER_RIGHT_BOXAD {
 	float: left;
 	margin: 0 15px;
 
@@ -230,9 +306,9 @@ body >a >img[src$="noad.gif"] {
 #WikiaAdInContentPlaceHolder {
 	position: absolute;
 	#INCONTENT_BOXAD_1 {
-		height: 250px;
-		width: 300px;
 		position: relative;
+		text-align: center;
+		width: 300px;
 	}
 }
 
@@ -240,7 +316,7 @@ body >a >img[src$="noad.gif"] {
 	max-width: 700px;
 }
 
-#NATIVE_TABOOLA_ARTICLE, #NATIVE_TABOOLA_RAIL {
+#NATIVE_TABOOLA_ARTICLE, #NATIVE_TABOOLA_RAIL, #TOP_LEADERBOARD_AB, #RECIRCULATION_RAIL {
 	.trc_rbox_header .trc_rbox_header_span {
 		color: $color-page-opposite;
 	}
@@ -253,6 +329,20 @@ body >a >img[src$="noad.gif"] {
 		color: $color-text;
 	}
 	.trc_rbox_div .video-label-box .branding {
+		color: $color-alternate-text;
+	}
+}
+
+#REVCONTENT_ABOVE_ARTICLE, #REVCONTENT_RIGHT_RAIL, #REVCONTENT_BELOW_ARTICLE {
+	.row-item h3 {
+		color: $color-page-opposite;
+	}
+
+	.rc-headline {
+		color: darken($color-page-opposite, 20%) !important;
+	}
+
+	.rc-provider, .rc-branding-label {
 		color: $color-alternate-text;
 	}
 }
@@ -295,9 +385,10 @@ body >a >img[src$="noad.gif"] {
 
 // Recovered message
 .recovered-message {
+	margin: 0 auto;
+	position: relative;
 	text-align: center;
-	padding: 10px 0;
-	min-height: 100px;
+	padding-top: 10px;
 
 	.message {
 		background: #fff;
@@ -359,29 +450,28 @@ body >a >img[src$="noad.gif"] {
 		background: url(/skins/oasis/images/recovered_message_icon.png) no-repeat; /* $wgCdnStylePath */
 	}
 
-	&.recovered-message-top {
-		margin: 0 auto;
-		position: relative;
-		max-width: 728px;
-		z-index: $wikia-top-ads-index;
+	&.recovered-message-right-rail {
+		width: 300px;
+	}
 
-		.icon {
-			margin: 0;
-		}
+	&.recovered-message-top {
+		width: 600px;
 
 		.message {
-			max-width: 550px;
+			max-width: 425px;
 			display: inline-block;
 
 			.dialog-pointer {
-				top: 15px;
-				left: -10px;
-				@include transform-rotate(-45deg);
+				top: 60px;
+				left: auto;
+				right: -10px;
+				@include transform-rotate(135deg);
 			}
 		}
 
 		.icon {
-			float: left;
+			margin: 0;
+			float: right;
 		}
 	}
 }

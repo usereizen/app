@@ -309,6 +309,16 @@ class OutputPage extends ContextSource {
 	 * @param $val String tag value
 	 */
 	function addMeta( $name, $val ) {
+		/** Wikia change begin: SEO-361: Investigate <meta name="description" content=" " /> */
+		if ( $name === 'description' && $val === ' ' ) {
+			array_push( $this->mMetatags, array( 'debug-description', 'SPACE' ) );
+			\Wikia\Logger\WikiaLogger::instance()->warning(
+				'Meta description containing just a space', [
+					'ex' => new Exception(),
+				]
+			);
+		}
+		/** Wikia change end */
 		array_push( $this->mMetatags, array( $name, $val ) );
 	}
 
@@ -830,11 +840,11 @@ class OutputPage extends ContextSource {
 	 */
 	public function setHTMLTitle( $name ) {
 		/* Wikia change - begin */
-		if ( $name instanceof Message ) {
-			$name = $name->setContext( $this->getContext() )->text();
+		if ( is_array( $name ) ) {
+			$this->mHTMLtitle = ( new WikiaHtmlTitle() )->setParts( $name )->getTitle();
+		} else {
+			$this->mHTMLtitle = ( new WikiaHtmlTitle() )->generateTitle( $this->getTitle(), $name )->getTitle();
 		}
-
-		$this->mHTMLtitle = WikiaHtmlTitle::getPageTitle( $name, $this->getTitle()->isMainPage() );
 		/* Wikia change - end */
 	}
 
@@ -1642,7 +1652,9 @@ class OutputPage extends ContextSource {
 	function addParserOutput( &$parserOutput ) {
 		$this->addParserOutputNoText( $parserOutput );
 		$text = $parserOutput->getText();
+
 		wfRunHooks( 'OutputPageBeforeHTML', array( &$this, &$text ) );
+
 		$this->addHTML( $text );
 	}
 

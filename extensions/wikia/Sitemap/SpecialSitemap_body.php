@@ -117,7 +117,7 @@ class SitemapPage extends UnlistedSpecialPage {
 	 * @access public
 	 */
 	public function getNamespacesList() {
-		global $wgSitemapNamespaces;
+		global $wgSitemapNamespaces, $wgEnableForumExt;
 
 		if ( is_array( $wgSitemapNamespaces ) ) {
 			$this->mNamespaces = $wgSitemapNamespaces;
@@ -125,6 +125,9 @@ class SitemapPage extends UnlistedSpecialPage {
 		}
 
 		$excludeList = array(NS_USER, NS_PROJECT, NS_MEDIAWIKI, NS_TEMPLATE, NS_HELP, 110, 1100, 1200, 1202);
+		if ( empty( $wgEnableForumExt ) ) {
+			$excludeList[] = 2000;	// for NS_WIKIA_FORUM_BOARD
+		}
 
 		$includeList = array();
 
@@ -195,7 +198,6 @@ class SitemapPage extends UnlistedSpecialPage {
 
 		$out = "";
 		$out .= "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-		$out .= sprintf( "<!-- generated on fly by %s -->\n", $this->mTitle->getFullURL() );
 		$out .= "<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
 
 		header( "Content-type: application/xml; charset=UTF-8" );
@@ -257,7 +259,6 @@ class SitemapPage extends UnlistedSpecialPage {
 		$dbr = wfGetDB( DB_SLAVE, "vslow" );
 
 		$out = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-		$out .= sprintf( "<!-- generated on the fly by %s -->\n", $this->mTitle->getFullURL() );
 
 		$scope = array( 'page_namespace' => $this->mNamespace );
 		$index = is_array( $sitemapIndex ) ? $sitemapIndex : $wgMemc->get( wfMemcKey( "sitemap-index") );

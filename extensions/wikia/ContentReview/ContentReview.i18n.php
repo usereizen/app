@@ -36,17 +36,28 @@ $messages['en'] = array(
 	'content-review-status-rejected' => 'Rejected',
 	'content-review-status-live' => 'Live',
 	'content-review-status-autoapproved' => 'Auto-approved',
+	'content-review-status-escalated' => 'Escalated',
 	'content-review-rejection-explanation-title' => 'Submitted script change $1 rejected',
 	'content-review-rejection-explanation' => '==$1==
 The recently submitted change to this JavaScript page (revision [$2 $3]) was rejected by the Wikia review process. Please make sure you meet the [[Help:JavaScript review process|Custom JavaScript guidelines]]. --~~~~',
 	'content-review-status-link-text' => 'Review status',
 	'content-review-special-js-pages-title' => 'JavaScript pages',
-	'content-review-special-js-description' => 'This page lists the current [[Help:JavaScript review process review status]] of MediaWiki namespace scripts on this community.',
+	'content-review-special-js-description' => 'This page lists the current [[Help:JavaScript review process|review status]] of MediaWiki namespace scripts on this community.',
 	'content-review-special-js-importjs-description' => 'Note: you can add and remove local and dev.wikia.com script imports without the review process via [[MediaWiki:ImportJS]].',
 	'content-review-importjs-description' => 'Here, you can easily import scripts:
 * from your local wikia by article name - e.g. MyScript.js
 * from dev.wikia.com by article name, preceded by "dev:" - e.g. dev:Code.js
 Names should not contain the MediaWiki namespace prefix. Write each script on a new line. See [[Help:Including additional CSS and JS]] for more information.
+----
+',
+	'content-review-profile-tags-description' => 'To use this feature, you must import [[w:c:dev:ProfileTags|ProfileTags.js]] from dev.wikia.com. [[w:c:dev:ProfileTags|Learn more]].
+
+Use this page to customize the tags that appear on user profiles. Separate usernames and tags by a pipe (|). To display multiple tags for a user, separate each tag text with commas. Write each username on a new line.
+
+Examples:
+
+ ExampleUsername | Trainee, Newbie
+ ExampleUsername2 | Guru
 ----
 ',
 );
@@ -86,6 +97,7 @@ $messages['qqq'] = array(
 	'content-review-status-rejected' => 'A name of a status of a revision that has been rejected.',
 	'content-review-status-autoapproved' => 'A name of a status of a revision that was auto-approved',
 	'content-review-status-live' => 'A name of a status of a revision that is currently live',
+	'content-review-status-escalated' => 'The name of the status of a revision that has been escalated.',
 	'content-review-rejection-explanation-title' => 'A title of a section with a rejection explanation. Became a separate message to allow extraction to a URL anchor of a Why? link.',
 	'content-review-rejection-explanation' => 'Standard explanation response when script changes were rejected. This text is a prefill to script talk page when reviewer is redirected there to provide feedback on rejection. $1 is the title message, $2 is a URL to a view of a revision and $3 is the number of a revision that becomes a text of the link.',
 	'content-review-status-link-text' => 'Text on entrypoint link to show content review module with review status info and submit for review buttons',
@@ -93,6 +105,11 @@ $messages['qqq'] = array(
 	'content-review-special-js-description' => 'Text with description of this special page that contains lists with all scripts in MediaWiki namespace on that community with their review statuses and linking to help page.',
 	'content-review-special-js-importjs-description' => 'Information that user can manage script imports from community or dev.wikia.com by editing  MediaWiki:ImportJS page.',
 	'content-review-importjs-description' => 'Information for user how to add scripts. For scripts from local wikia, user should only add article name and from dev.wikia.com should preceded them by "dev:". Also user should add MediaWiki namespace and should add each script in separate line.',
+	'content-review-profile-tags-description' => 'Inform user that to use this feature user must import ProfileTags.js script from dev.wikia.com. Then explain that user should use current page to customize user tags on their profiles by adding user name and tags separated by a pipe (|).
+	 If a user wants to provide for more than one tag for a user, they should separate them by comma. Also each user name should be written on a new line. Examples:
+
+    * ExampleUsername | Trainee, Newbie
+    * ExampleUsername2 | Guru',
 );
 
 $messages['de'] = array(
@@ -132,6 +149,27 @@ Die kürzlich eingereichte Änderung dieser JavaScript-Seite (Überprüfung [$2 
 	'content-review-status-link-text' => 'Stand der Überprüfung',
 	'content-review-rejection-explanation-title' => 'Die eingereichte Skript-Änderung $1 wurde abgelehnt',
 	'content-review-special-js-pages-title' => 'JavaScript-Seiten',
+	'content-review-module-header-pagename' => 'Seitenname',
+	'content-review-module-header-actions' => 'Aktionen',
+	'content-review-module-jspages' => 'Alle JS-Seiten',
+	'content-review-special-js-description' => 'Auf dieser Seite wird der aktuelle [[w:c:de:Hilfe:JavaScript-Überprüfungsprozess|Überprüfungsprozess]] von MediaWiki-Namensräume-Skripten dieser Community aufgeführt.',
+	'content-review-special-js-importjs-description' => 'Hinweis: du kannst lokale und dev.wikia.com-Skriptimporte ohne den Überprüfungsprozess über [[MediaWiki:ImportJS]] hinzufügen und entfernen.',
+	'content-review-importjs-description' => 'Von hier kannst du ganz einfach Skripte importieren:
+* aus deinem lokalen Wikia nach Artikelname - z. B. MyScript.js
+* aus dev.wikia.com nach Artikelname mit vorangestelltem "dev:" - z. B. dev:Code.js
+Namen sollten nicht das Wikia-Namensräume-Präfix enthalten. Verwende für jedes Skript eine neue Zeile. Weitere Informationen findest du unter [[Hilfe:Einbinden von zusätzlichem CSS und JS]].
+----
+',
+	'content-review-user-badges-description' => 'Um diese Funktion nutzen zu können, musst du [[w:c:dev:UserBadges|UserBadges.js]] von dev.wikia.com importieren. [[w:c:dev:UserBadges|Erfahre mehr]].
+
+    Verwende diese Seite, um die Abzeichen anzupassen, die in den Benutzerprofilen erscheinen. Benutzernamen und Abzeichen werden durch einen Doppelpunkt getrennt. Um für einen Benutzer mehrere Abzeichen anzuzeigen, trenne jeden Abzeichentext mit Kommas. Schreibe jeden Benutzernamen in eine neue Zeile.
+
+    Beispiele:
+
+    * BeispielBenutzername : Praktikant, Newbie
+    * BeispielBenutzername2 : Guru
+----
+',
 );
 
 $messages['es'] = array(
@@ -147,7 +185,7 @@ $messages['es'] = array(
 	'content-review-module-status-approved' => 'fue aprobado',
 	'content-review-module-status-rejected' => 'fue rechazado',
 	'content-review-rejection-reason-link' => '¿Por qué?',
-	'content-review-module-help' => '[[Ayuda:Personalización CSS y JS|Ayuda]]',
+	'content-review-module-help' => '[[w:es:Ayuda:Personalización CSS y JS|Ayuda]]',
 	'content-review-module-help-article' => 'Ayuda:Personalización CSS y JS',
 	'content-review-module-help-text' => 'Ayuda',
 	'content-review-module-submit' => 'Presentar para aprobación',
@@ -166,12 +204,33 @@ $messages['es'] = array(
 	'content-review-status-rejected' => 'Rechazado',
 	'content-review-status-live' => 'Activo',
 	'content-review-status-autoapproved' => 'Auto-aprobado',
-	'content-review-rejection-explanation' => '==$1==
-El cambio recientemente presentado a esta página de JavaScript (revisión [$2 $3]) fue rechazada por el proceso de revisión de Wikia. Por favor, asegúrate de que cumple con la [[Ayuda:Proceso de revisión de JavaScript|directrices de personalización de JavaScript]].
- --~~~~',
+	'content-review-rejection-explanation' => '== $1==
+El cambio recientemente presentado a esta página de JavaScript (revisión [$2 $3]) fue rechazada por el proceso de revisión de Wikia. Por favor, asegúrate de que cumple con las [[w:es:Ayuda:Proceso de revisión de JavaScript|directrices de personalización de JavaScript]]. --~~~~',
 	'content-review-status-link-text' => 'Estado de revisión',
 	'content-review-rejection-explanation-title' => 'El cambio de script $1 presentado ha sido rechazado',
 	'content-review-special-js-pages-title' => 'Páginas de JavaScript',
+	'content-review-module-header-pagename' => 'Nombre de la página',
+	'content-review-module-header-actions' => 'Acciones',
+	'content-review-module-jspages' => 'Todas las páginas de JS',
+	'content-review-special-js-description' => 'Esta página muestra el actual [[w:es:Ayuda:Proceso de revisión de JavaScript|el estado de revisión de JavaScript]] de los guiones de espacio para nombres de MediaWiki en esta comunidad.',
+	'content-review-special-js-importjs-description' => 'Nota: puedes añadir y remover guiones locales e importados de dev.wikia.com sin el proceso de revisión vía [[MediaWiki:ImportJS]].',
+	'content-review-importjs-description' => 'Aquí, puedes importar fácilmente guiones:
+* de tu wikia local por nombre de artículo - e.j. MiGuión.js
+* de dev.wikia.com por nombre de artículo, precedido por "dev:" - e.j. dev:Código.js
+Los nombres no deben contener el prefijo del espacio para nombres de MediaWiki. Escribe cada guión en una nueva línea. Ver [[w:es:Ayuda:Incluyendo JavaScript y CSS adicional]] para más información.
+----
+',
+	'content-review-user-badges-description' => 'Para utilizar esta función, debes importar [[w:c:dev:UserBadges|UserBadges.js]] de dev.wikia.com. [[w:c:dev:UserBadges|Conoce más]].
+
+    Utiliza esta página para personalizar los logros que aparecen en los perfiles de usuario. Separa los nombres de usuario y los logros con dos puntos. Para mostrar múltiples logros para un usuario, separa cada texto de logro con comas. Escribe cada nombre de usuario en una nueva línea.
+
+    Ejemplos:
+
+    * EjemploNombredeusuario : Aprendiz, Novato
+    * EjemploNombredeusuario2 : Gurú
+----
+
+',
 );
 
 $messages['fr'] = array(
@@ -211,6 +270,27 @@ Le processus de vérification Wikia a rejeté la modification soumise pour cette
 	'content-review-status-link-text' => 'État de la vérification',
 	'content-review-rejection-explanation-title' => 'Modification $1 soumise pour le script rejetée',
 	'content-review-special-js-pages-title' => 'Pages JavaScript',
+	'content-review-module-header-pagename' => 'Nom de la page',
+	'content-review-module-header-actions' => 'Actions',
+	'content-review-module-jspages' => 'Toutes les pages JS',
+	'content-review-special-js-description' => "Cette page indique [[w:c:fr:Aide:Processus_de_vérification_du_JavaScript| l'état de vérification]] des scripts de l'espace de noms MediaWiki relatifs à cette communauté.",
+	'content-review-special-js-importjs-description' => 'Remarque : vous pouvez ajouter et supprimer les importations de scripts dev.wikia.com et locaux sans processus de vérification via [[MediaWiki:ImportJS]].',
+	'content-review-importjs-description' => "Vous pouvez ici facilement importer des scripts :
+* de votre wikia local par nom d'article (par ex., MonScript.js) ;
+* de dev.wikia.com par nom d'article précédé de \"dev:\" (par ex., dev:Code.js).
+Les noms ne doivent pas comporter le préfixe d'espace de noms MediaWiki. Écrivez chaque script sur une nouvelle ligne. Pour plus d'informations, consultez la page [[Aide:Inclure_du_CSS_et_JS_supplémentaire]].
+----
+",
+	'content-review-user-badges-description' => "Pour utiliser cette fonctionnalité, vous devez importer [[w:c:dev:UserBadges|UserBadges.js]] depuis dev.wikia.com. [[w:c:dev:UserBadges|En savoir plus]]
+
+    Cette page permet de personnaliser les badges des profils utilisateur. Les noms d'utilisateur et les badges doivent être séparés par deux-points. Pour afficher plusieurs badges pour un utilisateur, séparez le texte de chaque badge par une virgule. Écrivez chaque nom d'utilisateur sur une nouvelle ligne.
+
+    Exemples :
+
+    * Nomutilisateur1 : Apprenti, Nouveau
+    * Nomutilisateur2 : Gourou
+----
+",
 );
 
 $messages['it'] = array(
@@ -226,9 +306,9 @@ $messages['it'] = array(
 	'content-review-module-status-approved' => 'è stata approvata',
 	'content-review-module-status-rejected' => 'è stata respinta',
 	'content-review-rejection-reason-link' => 'Perché?',
-	'content-review-module-help' => '[[Aiuto:Personalizzazione di CSS e JS|Guida]]',
+	'content-review-module-help' => '[[w:it:Aiuto:Processo di revisione del JavaScript|Guida]]',
 	'content-review-module-help-article' => 'Aiuto:CSS',
-	'content-review-module-help-text' => 'Aiuto',
+	'content-review-module-help-text' => 'Guida',
 	'content-review-module-submit' => 'Invia per revisione',
 	'content-review-module-submit-success' => 'Le modifiche per la revisione sono state inviate con successo.',
 	'content-review-module-submit-exception' => 'Sfortunatamente non abbiamo potuto inviare le modifiche per la revisione a causa del seguente errore: $1.',
@@ -250,6 +330,26 @@ La modifica inviata di recente per questa pagina in JavaScript (revisione [$2 $3
 	'content-review-status-link-text' => 'Stato della revisione',
 	'content-review-rejection-explanation-title' => 'La modifica $1 inviata per lo script è stata respinta',
 	'content-review-special-js-pages-title' => 'Pagine in JavaScript',
+	'content-review-module-header-pagename' => 'Titolo della pagina',
+	'content-review-module-header-actions' => 'Azioni',
+	'content-review-module-jspages' => 'Tutte le pagine JS',
+	'content-review-special-js-description' => "Questa pagina indica l'attuale [[Aiuto:Processo di revisione del JavaScript|Processo di revisione]] degli script dello spazio dei nomi MediaWiki relativi a questa comunità.",
+	'content-review-special-js-importjs-description' => 'Nota: puoi aggiungere e rimuovere le importazioni degli script dev.wikia.com e locali senza il processo di revisione via [[MediaWiki:ImportJS]].',
+	'content-review-importjs-description' => 'Potrai facilmente importare gli script:
+* dalla tua wikia locale con il nome dell\'articolo (per es., MyScript.js)
+* da dev.wikia.com con il nome dell\'articolo preceduto da "dev:" (per es., dev:Code.js)
+I nomi non devono contenere il prefisso dello spazio dei nomi MediaWiki. Scrivi ogni script su una riga nuova. Per maggiori informazioni consulta [[Aiuto:Includere CSS e JS]] supplementari.
+----
+',
+	'content-review-user-badges-description' => 'Per usare questa funzione, occorre importare [[w:c:dev:UserBadges|UserBadges.js]] da dev.wikia.com. [[w:c:dev:UserBadges|Ulteriori informazioni]]
+
+    Usare questa pagina per personalizzare le medaglie che sono visualizzate nei profili utente. Separare i nomi utente e le medaglie con un due punti. Per visualizzare diverse medaglie per  un utente, separare il testo di ogni medaglia con delle virgole. Scrivere il nome utente su una nuova riga.
+
+    Esempi:
+
+    *ExampleUsername : Trainee; Newbie
+    *ExampleUsername2 : Guru
+',
 );
 
 $messages['ja'] = array(
@@ -289,6 +389,27 @@ $messages['ja'] = array(
 	'content-review-status-link-text' => '審査状況',
 	'content-review-rejection-explanation-title' => '申請したスクリプトの変更「$1」が拒否されました',
 	'content-review-special-js-pages-title' => 'JavaScriptページ',
+	'content-review-module-header-pagename' => 'ページ名',
+	'content-review-module-header-actions' => '対処',
+	'content-review-module-jspages' => 'すべてのJSページ',
+	'content-review-special-js-description' => 'このページには、このコミュニティのMediaWiki名前空間スクリプトの現在の[[w:c:ja:ヘルプ:JavaScriptの審査プロセス|審査状況]]が一覧表示されています。',
+	'content-review-special-js-importjs-description' => '注：ローカルとdev.wikia.comのスクリプトのインポートは、[[MediaWiki:ImportJS]]から審査プロセスを経ずに追加、削除できます。',
+	'content-review-importjs-description' => 'ここでは、スクリプトを簡単にインポートしていただけます：
+* ローカルウィキアからは記事名（例：MyScript.js）
+* dev.wikia.comからは記事名の先頭に「dev:」を付ける（例：dev:Code.js）
+MediaWikiの名前空間プレフィックスは名前に含めないでください。スクリプトごとに新しい行に記述します。詳しくは、[[ヘルプ:追加のJavaScriptとCSSをインクルードする]]をご覧ください。
+----
+',
+	'content-review-user-badges-description' => 'この機能を使用するには、dev.wikia.comから[[w:c:dev:UserBadges|UserBadges.js]]を読み込む必要があります。詳しくは、[[w:c:dev:UserBadges|こちら]]をご覧ください。
+
+    このページを使用すると、ユーザー・プロフィールに表示するバッジをカスタマイズできます。ユーザー名とバッジはコロンで区切り、1人のユーザーに複数のバッジを表示する場合は各バッジのテキストをカンマで区切ります。また、ユーザー名ごとに改行してください。
+
+    例：
+
+    * ユーザー名1 : 見習い, 新人
+    * ユーザー名2 : グル
+----
+',
 );
 
 $messages['nl'] = array(
@@ -328,6 +449,27 @@ The recently submitted change to this JavaScript page (revision [$2 $3]) was rej
 	'content-review-status-link-text' => 'Review status',
 	'content-review-rejection-explanation-title' => 'Submitted script change $1 rejected',
 	'content-review-special-js-pages-title' => 'JavaScript pages',
+	'content-review-module-header-pagename' => 'Page name',
+	'content-review-module-header-actions' => 'Actions',
+	'content-review-module-jspages' => 'All JS pages',
+	'content-review-special-js-description' => 'This page lists the current [[Help:JavaScript review process review status]] of MediaWiki namespace scripts on this community.',
+	'content-review-special-js-importjs-description' => 'Note: you can add and remove local and dev.wikia.com script imports without the review process via [[MediaWiki:ImportJS]].',
+	'content-review-importjs-description' => 'Here, you can easily import scripts:
+* from your local wikia by article name - e.g. MyScript.js
+* from dev.wikia.com by article name, preceded by "dev:" - e.g. dev:Code.js
+Names should not contain the MediaWiki namespace prefix. Write each script on a new line. See [[Help:Including additional CSS and JS]] for more information.
+----
+',
+	'content-review-user-badges-description' => 'To use this feature, you must import [[w:c:dev:UserBadges|UserBadges.js]] from dev.wikia.com. [[w:c:dev:UserBadges|Learn more]].
+
+    Use this page to customize the badges that appear on user profiles. Separate usernames and badges by a colon. To display multiple badges for a user, separate each badge text with commas. Write each username on a new line.
+
+    Examples:
+
+    * ExampleUsername : Trainee, Newbie
+    * ExampleUsername2 : Guru
+----
+',
 );
 
 $messages['pl'] = array(
@@ -367,6 +509,27 @@ Niedawno przesłana zmiana tej strony JavaScript (wersja [$2 $3]) została odrzu
 	'content-review-status-link-text' => 'Status przeglądu',
 	'content-review-rejection-explanation-title' => 'Przesłana zmiana skryptu $1 została odrzucona',
 	'content-review-special-js-pages-title' => 'Strony JavaScript',
+	'content-review-module-header-pagename' => 'Nazwa strony',
+	'content-review-module-header-actions' => 'Działania',
+	'content-review-module-jspages' => 'Wszystkie strony JS',
+	'content-review-special-js-description' => 'Ta strona przedstawia aktualny [[Help:JavaScript review process|status przeglądu]] skryptów obszaru nazw MediaWiki na tej społeczności.',
+	'content-review-special-js-importjs-description' => 'Uwaga: istnieje możliwość dodawania i usuwania skryptów importowanych lokalnie i na dev.wikia.com bez procesu przeglądu poprzez [[MediaWiki:ImportJS]].',
+	'content-review-importjs-description' => 'Tutaj z łatwością zaimportujesz skrypty:
+* z lokalnej wikii według nazwy artykułu - np. MyScript.js
+* z dev.wikia.com według nazwy artykułu dodając "dev:" na początku nazwy - np. dev:Code.js
+Nazwy nie powinny zawierać przedrostka obszaru nazw MediaWiki. Każdy skrypt należy zapisywać w nowej linii. Zobacz [[Help:Including additional CSS and JS]], aby uzyskać więcej informacji.
+----
+',
+	'content-review-user-badges-description' => 'Jeśli chcesz korzystać z tej funkcji, musisz zaimportować [[w:c:dev:UserBadges|UserBadges.js]] ze strony dev.wikia.com. [[w:c:dev:UserBadges|Dowiedz się więcej]].
+
+    Skorzystaj z tej strony, aby dostosować odznaczenia widoczne na profilach użytkowników. Rozdziel nazwę użytkownika i odznaczenie dwukropkiem. Jeśli chcesz wyświetlać wiele odznaczeń na jednym profilu użytkownika, oddziel tekst każdego oznaczenia przecinkiem. Każdą kolejną nazwę użytkownika napisz w nowej linii.
+
+    Przykłady:
+
+    * PrzykładowaNazwaUżytkownika : Praktykant, Nowy
+    * PrzykładowaNazwaUżytkownika2 : Guru
+----
+',
 );
 
 $messages['pt'] = array(
@@ -406,6 +569,23 @@ A recente alteração enviada para esta página JavaScript (revisão [$2 $3]) fo
 	'content-review-status-link-text' => 'Status da revisão',
 	'content-review-rejection-explanation-title' => 'A alteração do script $1 enviado foi rejeitada',
 	'content-review-special-js-pages-title' => 'Páginas JavaScript',
+	'content-review-module-header-pagename' => 'Título da página',
+	'content-review-module-header-actions' => 'Ações',
+	'content-review-module-jspages' => 'Todas as páginas JS',
+	'content-review-special-js-description' => 'Esta página indica o atual [[Ajuda:Processo de revisão de JavaScript |status de revisão]] dos scripts namespace MediaWiki nesta comunidade.',
+	'content-review-special-js-importjs-description' => 'Nota: você pode adicionar e remover os scripts importados local e dev.wikia.com sem o processo de revisão em [[MediaWiki:ImportJS]].',
+	'content-review-importjs-description' => 'Aqui, você pode importar scripts facilmente:
+* da sua wikia local pelo nome do artigo - por exemplo, MyScript.js
+* de dev.wikia.com pelo nome do artigo, precedido por "dev:"- por exemplo, dev:Code.js
+Nomes não devem conter o prefixo de namespace MediaWiki. Escreva cada script em uma nova linha. Veja [[Ajuda: incluindo CSS e JS adicionais]] para obter mais informações. ---- ',
+	'content-review-user-badges-description' => 'Para usar este recurso, você deve importar [[w:c:dev:UserBadges| UserBadges.js]] de dev.wikia.com. [[w:c:dev:UserBadges|Saiba mais]].
+
+  Use esta página para personalizar as medalhas que aparecem nos perfis de usuário. Os nomes de usuários e as medalhas devem ser separados por dois-pontos. Para exibir várias medalhas para um usuário, separe cada texto com vírgulas. Escreva cada nome de usuário em uma nova linha.
+
+  Exemplos:
+
+  * ExemploNomedeusuário: estagiário, novato
+  * ExemploNomedeusuário2: guru',
 );
 
 $messages['ru'] = array(
@@ -441,10 +621,32 @@ $messages['ru'] = array(
 	'content-review-status-live' => 'Используется',
 	'content-review-status-autoapproved' => 'Одобрено автоматически',
 	'content-review-rejection-explanation' => '==$1==
-Недавно отправленные изменения этой страницы (версия [$2 $3]) были отклонены после проверки кода. Пожалуйста, проверьте, соответствует ли ваш код [[w:c:ru:Справка:Проверка JavaScript|политике Викия в отношении пользовательского JavaScript]]. --~~~~',
-	'content-review-status-link-text' => 'Прогресс проверки',
+Отправленные недавно изменения этой страницы (версия [$2 $3]) были отклонены после проверки кода. Проверьте, соответствует ли ваш код [[w:c:ru:Справка:Проверка JavaScript|политике Викия в отношении пользовательского JavaScript]]. --~~~~',
+	'content-review-status-link-text' => 'Статус проверки',
 	'content-review-rejection-explanation-title' => 'Отправленная версия $1 была отклонена',
 	'content-review-special-js-pages-title' => 'Страницы JavaScript',
+	'content-review-module-header-pagename' => 'Название страницы',
+	'content-review-module-header-actions' => 'Действия',
+	'content-review-module-jspages' => 'Все страницы с JavaScript',
+	'content-review-special-js-description' => 'На этой странице указан текущий [[Справка:Проверка JavaScript|статус проверки JS]] для всех страниц с общим JS на этой вики.',
+	'content-review-special-js-importjs-description' => "''Примечание''. Вы можете добавлять и удалять локальные скрипты без проверки с помощью страницы [[MediaWiki:ImportJS]].",
+	'content-review-importjs-description' => 'С помощью этой страницы вы можете с лёгкостью добавлять скрипты:
+* с локальной вики путём добавления названия страницы — например MyScript.js
+* с dev.wikia.com при помощи добавления названия страницы с префиксом dev — например dev:Code.js
+Названия не должны содержать префикс «MediaWiki». Указывайте название каждого отдельного скрипта новой строкой.
+См. [[Справка:Включение дополнительных JS и CSS]] для получения дополнительной информации.
+----
+',
+	'content-review-user-badges-description' => 'Чтобы использовать эту функцию, вы должны импортировать [[w:c:dev:UserBadges|UserBadges.js]] from dev.wikia.com. [[w:c:dev:UserBadges|Подробнее о UserBadges]].
+
+    Используйте эту страницу, чтобы добавить пользовательские таблички, аналогичные табличкам со статусами, в профайлы участников. Чтобы добавить несколько табличек сразу, просто разделите их запятыми.
+
+    Пример:
+
+    * Участник1 : Новенький
+    * ОпытныйУчастник2 : Гуру, Мастер шаблонов
+----
+',
 );
 
 $messages['zh-hans'] = array(
@@ -484,6 +686,24 @@ JavaScript页面最近提交的变更请求(版本[$2 $3]) 未通过Wikia审核�
 	'content-review-status-link-text' => '审核状态',
 	'content-review-rejection-explanation-title' => '提交的脚本更改$1被拒绝',
 	'content-review-special-js-pages-title' => 'JavaScript页面',
+	'content-review-module-header-pagename' => '页面名称',
+	'content-review-module-header-actions' => '操作',
+	'content-review-module-jspages' => '所有的JS页面',
+	'content-review-special-js-description' => '此页面列出这个社区当前Mediawiki命名空间脚本的[[Help:JavaScript審核流程|审核状态]]。',
+	'content-review-special-js-importjs-description' => '注意: 您可以不需要通过[[MediaWiki:ImportJS]]审查流程就可以添加和删除本地以及dev.wikia.com的脚本输入。',
+	'content-review-importjs-description' => '在这里，您可以通过以下途径轻松地导入脚本:
+* 在您的Wikia社区通过文章名称进行导入 - 例如：MyScript.js
+* 从dev.wikia.com通过文章名称，前缀"dev:"进行导入 - 例如：dev:Code.js
+名称不应包含MediaWiki命名空间前缀。请在新的一行上逐个输入脚本。请点击[[Help:Including additional CSS and JS|帮助页]]了解详细信息。
+----',
+	'content-review-user-badges-description' => '若要使用此功能，您必须从dev.wikia.com导入[[w:c:dev:UserBadges|UserBadges.js]]。[[w:c:dev:UserBadges|点击这里了解更多]]。
+
+    使用此页可以自定义出现在用户设定界面上的徽章。使用冒号分隔用户名和徽章。若要为用户显示多枚徽章，请用逗号分隔每个徽章名称。您可以在新的一行上写每个用户名。
+
+    例如:
+    * 用户名例子1: 见习，新手
+    * 用户名例子2: 大师
+----',
 );
 
 $messages['zh-hant'] = array(
@@ -523,5 +743,23 @@ JavaScript頁最近提交的變更請求(版本[$2 $3]) 未通過Wikia審核。 
 	'content-review-status-link-text' => '審核狀態',
 	'content-review-rejection-explanation-title' => '提交的腳本更改$1被拒絕',
 	'content-review-special-js-pages-title' => 'JavaScript頁',
+	'content-review-module-header-pagename' => '頁面名稱',
+	'content-review-module-header-actions' => '操作',
+	'content-review-module-jspages' => '所有的JS頁面',
+	'content-review-special-js-description' => '此頁面列出這個社區當前Mediawiki命名空間腳本的[[Help:JavaScript審核流程|審核狀態]]。',
+	'content-review-special-js-importjs-description' => '注意: 您可以不需要通過[[MediaWiki:ImportJS]]審查流程就可以添加和刪除本地以及dev.wikia.com的腳本輸入。',
+	'content-review-importjs-description' => '在這裡，您可以通過以下途徑輕鬆地導入腳本:
+* 在您的Wikia社區通過文章名稱進行導入 - 例如：MyScript.js
+* 從dev.wikia.com通過文章名稱，首碼"dev:"進行導入 - 例如：dev:Code.js
+名稱不應包含MediaWiki命名空間首碼。請在新的一行上逐個輸入腳本。請點擊[[Help:Including additional CSS and JS|説明頁]]參閱詳細資訊。
+----',
+	'content-review-user-badges-description' => '若要使用此功能，您必須從dev.wikia.com導入[[w:c:dev:UserBadges|UserBadges.js]]。[[w:c:dev:UserBadges|點擊這裡查閱更多]]。
+
+使用此頁可以自訂出現在用户設定介面上的徽章。 使用冒號分隔用户名和徽章。若要為用户顯示多枚徽章，請用逗號分隔每個徽章名稱。您可以在新的一行上寫上每個用户名。
+
+例如:
+* 用户名例子1: 見習，新手
+* 用户名例子2: 大師
+----',
 );
 

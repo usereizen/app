@@ -4,12 +4,13 @@
  */
 define('ext.wikia.adEngine.adContext', [
 	'wikia.abTest',
+	'wikia.cookies',
 	'wikia.document',
 	'wikia.geo',
 	'wikia.instantGlobals',
 	'wikia.window',
 	'wikia.querystring'
-], function (abTest, doc, geo, instantGlobals, w, Querystring) {
+], function (abTest, cookies, doc, geo, instantGlobals, w, Querystring) {
 	'use strict';
 
 	instantGlobals = instantGlobals || {};
@@ -34,6 +35,10 @@ define('ext.wikia.adEngine.adContext', [
 		return !!parseInt(qs.getVal(param, '0'), 10);
 	}
 
+	function isPageType(pageType) {
+		return context.targeting.pageType === pageType;
+	}
+
 	function setContext(newContext) {
 		var i,
 			len,
@@ -48,10 +53,15 @@ define('ext.wikia.adEngine.adContext', [
 		context.targeting = context.targeting || {};
 		context.providers = context.providers || {};
 		context.forcedProvider = qs.getVal('forcead', null) || context.forcedProvider || null;
+		context.opts.noExternals = noExternals;
 
 		// Don't show ads when Sony requests the page
 		if (doc && doc.referrer && doc.referrer.match(/info\.tvsideview\.sony\.net/)) {
 			context.opts.showAds = false;
+		}
+
+		if (geo.isProperGeo(instantGlobals.wgAdDriverDelayCountries)) {
+			context.opts.delayEngine = true;
 		}
 
 		// SourcePoint detection integration
@@ -64,15 +74,14 @@ define('ext.wikia.adEngine.adContext', [
 				geo.isProperGeo(instantGlobals.wgAdDriverSourcePointDetectionMobileCountries));
 		}
 
-		// SourcePoint recovery integration
-		if (context.opts.sourcePointDetection && context.opts.sourcePointRecoveryUrl) {
-			context.opts.sourcePointRecovery = isUrlParamSet('sourcepointrecovery') ||
-				geo.isProperGeo(instantGlobals.wgAdDriverSourcePointRecoveryCountries);
+		// SourcePoint recovery integration (set in AdEngine2ContextService based on wgEnableUsingSourcePointProxyForCSS)
+		if (isUrlParamSet('sourcepointrecovery')) {
+			context.opts.sourcePointRecovery = true;
 		}
-
 		// Recoverable ads message
 		if (context.opts.sourcePointDetection && !context.opts.sourcePointRecovery && context.opts.showAds) {
-			context.opts.recoveredAdsMessage = geo.isProperGeo(instantGlobals.wgAdDriverAdsRecoveryMessageCountries);
+			context.opts.recoveredAdsMessage = isPageType('article') &&
+				geo.isProperGeo(instantGlobals.wgAdDriverAdsRecoveryMessageCountries);
 		}
 
 		// Google Consumer Surveys
@@ -81,8 +90,8 @@ define('ext.wikia.adEngine.adContext', [
 				geo.isProperGeo(instantGlobals.wgAdDriverGoogleConsumerSurveysCountries);
 		}
 
-		// Showcase.*
-		if (isUrlParamSet('showcase')) {
+		// showcase.*
+		if (cookies.get('mock-ads') === 'NlfdjR5xC0') {
 			context.opts.showcase = true;
 		}
 
@@ -91,19 +100,22 @@ define('ext.wikia.adEngine.adContext', [
 			context.targeting.pageCategories = w.wgCategories || getMercuryCategories();
 		}
 
-		// Taboola integration
-		if (context.providers.taboola) {
-			context.providers.taboola = !!abTest.getGroup('TABOOLA_MODULES') &&
-				geo.isProperGeo(instantGlobals.wgAdDriverTaboolaCountries) &&
-				context.targeting.pageType === 'article';
+		// Evolve2 integration
+		if (context.providers.evolve2) {
+			context.providers.evolve2 = geo.isProperGeo(instantGlobals.wgAdDriverEvolve2Countries);
 		}
 
 		if (geo.isProperGeo(instantGlobals.wgAdDriverTurtleCountries)) {
 			context.providers.turtle = true;
 		}
 
-		if (geo.isProperGeo(instantGlobals.wgAdDriverOpenXCountries)) {
-			context.providers.openX = true;
+		if (geo.isProperGeo(instantGlobals.wgAdDriverHitMediaCountries)) {
+			context.providers.hitMedia = true;
+		}
+
+		if (context.providers.rubiconFastlane) {
+			context.providers.rubiconFastlane = geo.isProperGeo(instantGlobals.wgAdDriverRubiconFastlaneCountries) &&
+				geo.isProperGeo(instantGlobals.wgAdDriverRubiconFastlaneProviderCountries);
 		}
 
 		// INVISIBLE_HIGH_IMPACT slot
@@ -112,9 +124,19 @@ define('ext.wikia.adEngine.adContext', [
 			geo.isProperGeo(instantGlobals.wgAdDriverHighImpactSlotCountries)
 		) || isUrlParamSet('highimpactslot');
 
+		// INVISIBLE_HIGH_IMPACT_2 slot
+		context.slots.invisibleHighImpact2 = geo.isProperGeo(instantGlobals.wgAdDriverHighImpact2SlotCountries);
+
 		// INCONTENT_PLAYER slot
 		context.slots.incontentPlayer = geo.isProperGeo(instantGlobals.wgAdDriverIncontentPlayerSlotCountries) ||
 			isUrlParamSet('incontentplayer');
+
+		// INCONTENT_LEADERBOARD slot
+		context.slots.incontentLeaderboard =
+			geo.isProperGeo(instantGlobals.wgAdDriverIncontentLeaderboardSlotCountries);
+
+		context.slots.incontentLeaderboardAsOutOfPage =
+			geo.isProperGeo(instantGlobals.wgAdDriverIncontentLeaderboardOutOfPageSlotCountries);
 
 		context.opts.scrollHandlerConfig = instantGlobals.wgAdDriverScrollHandlerConfig;
 		context.opts.enableScrollHandler = geo.isProperGeo(instantGlobals.wgAdDriverScrollHandlerCountries) ||
@@ -124,10 +146,30 @@ define('ext.wikia.adEngine.adContext', [
 		context.targeting.enableKruxTargeting = !!(
 			context.targeting.enableKruxTargeting &&
 			geo.isProperGeo(instantGlobals.wgAdDriverKruxCountries) &&
-			!instantGlobals.wgSitewideDisableKrux &&
-			!context.targeting.wikiDirectedAtChildren &&
-			!noExternals
+			!instantGlobals.wgSitewideDisableKrux
 		);
+
+		// Floating medrec
+		context.opts.floatingMedrec = !!(
+			context.opts.showAds && context.opts.adsInContent &&
+			(isPageType('article') || isPageType('search')) &&
+			!context.targeting.wikiIsCorporate
+		);
+
+		// Override prefooters sizes
+		context.opts.overridePrefootersSizes =  !!(
+			context.targeting.skin === 'oasis' &&
+			geo.isProperGeo(instantGlobals.wgAdDriverOverridePrefootersCountries) &&
+			!isPageType('home')
+		);
+
+		context.opts.yavli = !!(
+			!noExternals &&
+			geo.isProperGeo(instantGlobals.wgAdDriverYavliCountries) &&
+			isPageType('article')
+		);
+
+		context.providers.revcontent = !noExternals && geo.isProperGeo(instantGlobals.wgAdDriverRevcontentCountries);
 
 		// Export the context back to ads.context
 		// Only used by Lightbox.js, WikiaBar.js and AdsInContext.js

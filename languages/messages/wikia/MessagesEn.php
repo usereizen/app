@@ -1,6 +1,6 @@
 <?php
 #Related to visitor skins: Slate.php and Smoke.php
-$messages = array_merge( $messages , array(
+$messages = array_merge( $messages , [
 # Default for corporate skin
 'corporatepage-sidebar' => '*http://entertainment.wikia.com/|Entertainment
 ** http://harrypotter.wikia.com/|Harry Potter Wiki
@@ -267,12 +267,6 @@ ___________________________________________________________
 ',
 'rcshowhideenhanced' => '$1 enhanced recent changes',
 'prefsnologintext'	=> 'You must be <span class="plainlinks">[{{fullurl:Special:UserLogin|$1}} logged in]</span> to set user preferences.',
-'recentchanges-on-wikia-title' => 'Recent changes across Wikia',
-'recentchanges-on-wikia-content' => "Introducing Template Types — Organize your templates by type to make [[Special:Templates|template management]] simpler and to improve how they display on mobile phones. [[Help:Template Types|Learn more]] or '''[[Special:Insights/templateswithouttype|Get started now!]]'''
-
-Tabbed images and collapsible groups are now available for [[Help:Infobox|Portable Infoboxes]].
-
-Is your content portable? Learn more about future-proofing content at [[w:c:portability|Portability.wikia.com]].",
 'recentchangestext' => '<div style="border:solid 3px #e9e9e9; margin-bottom:0.3em;">
 <div style="padding-left:0.5em; padding-right:0.5em;">
 This special page lets you track the most recent changes to the wiki.
@@ -326,6 +320,9 @@ Your account has been created. Don't forget to change your {{SITENAME}} [[Specia
 'group-voldev' => 'Volunteer Developers',
 'group-voldev-member' => 'Volunteer Developer',
 'grouppage-voldev' => 'w:c:dev:Volunteer_Developers',
+
+'group-content-moderator' => 'Content Moderators',
+'group-content-moderator-member' => 'Content Moderator',
 
 #new registration aka LoginFriction aka Signup
 
@@ -1054,5 +1051,23 @@ hu',
 'import-article-not-js-single' => '$1 was not loaded as it\'s not a JS page (requested by user-supplied javascript). Please make sure the article title has .js extension.',
 'import-article-not-js-multiple' => '$1 $2 were not loaded as they\'re not JS pages (requested by user-supplied javascript). Please make sure the articles titles have .js extension.',
 
-'wikia-pagetitle' => '$1 - Wikia',
-) );
+'wikia-pagetitle-brand' => 'Wikia',
+'wikia-pagetitle-sitename' => '{{SITENAME}}',
+
+'wikia-read-only-mode' => 'Uh-oh! Our main datacenter is currently unavailable, so this is our backup. Unfortunately, this means you may not be able to do certain things like edit, upload, or chat.
+We are working to fix the problem, thank you for your patience! If you see this for an extended period of time, feel free to contact Wikia at community@wikia.com.',
+
+// VOLDEV-144: Update anon purge messages for friendliness
+'confirm-purge-top' => 'Would you like to clear the cache for this page?',
+'confirm_purge_button' => 'Yes, I am not a robot',
+'confirm-purge-bottom' => 'Clearing a page\'s cache helps ensure the latest version will appear.',
+
+// Moved from the Blogs extension since it should be always available.
+'blog-avatar-defaults' => 'Avatar.jpg
+Avatar2.jpg
+Avatar3.jpg
+Avatar4.jpg
+Avatar5.jpg
+Avatar6.jpg'
+] );
+

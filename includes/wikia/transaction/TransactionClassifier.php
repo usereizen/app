@@ -48,6 +48,7 @@ class TransactionClassifier {
 		'Chat',
 		'Newimages',
 		'Videos',
+		'Contributions',
 	);
 
 	protected static $FILTER_AJAX_FUNCTIONS = array(
@@ -66,6 +67,8 @@ class TransactionClassifier {
 		'opensearch',
 		'parse',
 		'lyrics',
+		'visualeditor',
+		'visualeditoredit',
 	);
 
 	protected static $MAP_ARTICLE_NAMESPACES = array(
@@ -164,6 +167,7 @@ class TransactionClassifier {
 			// api call - api.php
 			case Transaction::ENTRY_POINT_API:
 				$this->addByList( Transaction::PARAM_API_ACTION, self::$FILTER_API_CALLS );
+				$this->add( Transaction::PARAM_API_LIST );
 				break;
 			// MediaWiki maintenance scripts
 			case Transaction::ENTRY_POINT_MAINTENANCE:

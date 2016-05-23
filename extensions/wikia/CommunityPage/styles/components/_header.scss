@@ -1,0 +1,45 @@
+@import 'skins/shared/color';
+@import 'skins/shared/mixins/flexbox';
+
+$hero-image-pattern: '/extensions/wikia/CommunityPage/images/hero_image_pattern.png';
+
+@if $is-dark-wiki {
+	$hero-image-pattern: '/extensions/wikia/CommunityPage/images/hero_image_pattern_dark.png';
+}
+
+.community-page-header {
+	@include flexbox();
+	align-items: center;
+	background: url($hero-image-pattern);
+	height: 200px;
+	justify-content: center;
+	text-align: center;
+
+	&.community-page-header-cover {
+		background-position: center;
+		background-size: cover;
+	}
+
+	.community-page-header-content {
+		width: 75%;
+	}
+
+	h1.community-page-heading {
+		font-size: 36px;
+		font-weight: bold;
+		line-height: 48px;
+	}
+}
+
+.community-page-admin-welcome-message {
+	align-items: center;
+	background-color: $color-unified-module-background;
+	display: flex;
+	justify-content: center;
+	text-align: center;
+
+	.community-page-admin-welcome-message-text {
+		margin: 30px 0;
+		max-width: 478px;
+	}
+}

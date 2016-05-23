@@ -1,4 +1,5 @@
 <?php
+use Wikia\Paginator\Paginator;
 
 /**
  * Main Category Gallery class
@@ -140,8 +141,11 @@ class CategoryExhibitionSection {
 
 		if ( in_array( $sortType, $this->allowedSortOptions ) ) {
 			if ( !$wgUser->isAnon() ) {
-				$wgUser->setGlobalPreference('CategoryExhibitionSortType', $sortType );
-				$wgUser->saveSettings();
+				# PLATFORM-1801: only update the preference when needed - i.e. we do change the value and it's not a default one
+				if ( $wgUser->getGlobalPreference('CategoryExhibitionSortType', $this->allowedSortOptions[0] ) !== $sortType ) {
+					$wgUser->setGlobalPreference('CategoryExhibitionSortType', $sortType );
+					$wgUser->saveSettings();
+				}
 			}
 			$this->sortOption = $sortType;
 		}
@@ -176,8 +180,11 @@ class CategoryExhibitionSection {
 		global $wgUser;
 		if ( in_array( $displayType, $this->allowedDisplayOptions ) ) {
 			if ( !$wgUser->isAnon() ) {
-				$wgUser->setGlobalPreference('CategoryExhibitionDisplayType', $displayType );
-				$wgUser->saveSettings();
+				# PLATFORM-1801: only update the preference when needed - i.e. we do change the value and it's not a default one
+				if ( $wgUser->getGlobalPreference('CategoryExhibitionDisplayType', $this->allowedDisplayOptions[0] ) !== $displayType ) {
+					$wgUser->setGlobalPreference('CategoryExhibitionDisplayType', $displayType);
+					$wgUser->saveSettings();
+				}
 			}
 			$this->displayOption = $displayType;
 		}
@@ -217,17 +224,19 @@ class CategoryExhibitionSection {
 		$oTmpl = new EasyTemplate( dirname( __FILE__ ) . "/templates/" );
 		if( empty( $cachedContent ) ){
 			$aTmpData = $this->fetchSectionItems( $namespace, $negative );
-			$pages = Paginator::newFromArray( $aTmpData, $itemsPerPage );
+			$pages = new Paginator( count( $aTmpData ), $itemsPerPage, $this->sUrl, [
+				'paramName' => $this->urlParameter
+			] );
 			if ( is_array( $aTmpData ) && count( $aTmpData ) > 0 ){
-				$aTmpData = $pages->getPage( $this->paginatorPosition, true );
+				$pages->setActivePage( $this->paginatorPosition );
+				$aTmpData = $pages->getCurrentPage( $aTmpData );
 				$aData = $this->getArticles( $aTmpData );
-				$oTmpl->set_vars(
-					array (
-						'data'		=> $aData,
-						'category'	=> $this->categoryTitle->getText(),
-						'paginator'	=> $pages->getBarHTML( $this->sUrl )
-					)
-				);
+				$oTmpl->set_vars( [
+					'data' => $aData,
+					'category' => $this->categoryTitle->getText(),
+					'paginator' => $pages->getBarHTML(),
+					'headLinks' => $pages->getHeadItem(),
+				] );
 				$this->saveToCache( $oTmpl->mVars );
 				return $oTmpl;
 			} else {
@@ -326,7 +335,6 @@ class CategoryExhibitionSection {
 	}
 
 	protected function getArticleData( $pageId ){
-		global $wgVideoHandlersVideosMigrated;
 
 		$oTitle = Title::newFromID( $pageId );
 		if(!($oTitle instanceof Title)) {
@@ -339,7 +347,6 @@ class CategoryExhibitionSection {
 			$pageId,
 			F::App()->wg->cityId,
 			$this->isVerify(),
-			$wgVideoHandlersVideosMigrated ? 1 : 0,
 			$this->getTouched($oTitle)
 		);
 
@@ -395,27 +402,15 @@ class CategoryExhibitionSection {
 			$paginatorPosition = (int)$reqValues[ $variableName ];
 			unset( $reqValues[ $variableName ] );
 		};
-		$return = array();
-		foreach( $reqValues AS $key => $value ) {
-			$return[] = urlencode( $key ) . '=' . urlencode( $value );
-		}
 
-		$url = $wgTitle->getFullURL().'?'.implode( '&', $return );
-		if ( count($return) > 0 ){
-			$url.= '&'.$variableName.'=%s';
-		} else {
-			$url.= '?'.$variableName.'=%s';
-		}
-		$this->sUrl = $url;
+		$this->sUrl = $wgTitle->getFullURL( $reqValues );
 		$this->paginatorPosition = $paginatorPosition;
-		return array( 'url' => $url, 'position' => $paginatorPosition );
 	}
 
 	/**
 	 * Caching functions.
 	 */
 	protected function getKey() {
-		global $wgVideoHandlersVideosMigrated;
 		return wfMemcKey(
 			'category_exhibition_section_0',
 			md5($this->categoryTitle->getDBKey()),
@@ -424,7 +419,6 @@ class CategoryExhibitionSection {
 			$this->getDisplayType(),
 			$this->getSortType(),
 			$this->isVerify(),
-			($wgVideoHandlersVideosMigrated ? 1 : 0),
 			$this->getTouched($this->categoryTitle),
 			self::CACHE_VERSION
 		);
@@ -443,16 +437,13 @@ class CategoryExhibitionSection {
 		$wgMemc->set($this->getTouchedKey($title), time() . rand(0,9999), 60*60*24 );
 	}
 
-	protected function getTouchedKey($title) {
-		//fb#24914
-		if( $title instanceof Title ) {
-			$key = wfMemcKey( 'category_touched', md5($title->getDBKey()), self::CACHE_VERSION );
-			return $key;
-		} else {
-			Wikia::log(__METHOD__, '', '$title not an instance of Title');
-			Wikia::logBacktrace(__METHOD__);
-			return null;
-		}
+	/**
+	 * @param Title $title
+	 * @return string
+	 */
+	protected function getTouchedKey( Title $title ) {
+		$key = wfMemcKey( 'category_touched', md5($title->getDBKey()), self::CACHE_VERSION );
+		return $key;
 	}
 
 	protected function saveToCache( $content ) {

@@ -479,6 +479,7 @@ class Parser {
 		}
 
 		wfRunHooks( 'ParserAfterTidy', array( &$this, &$text ) );
+
 		// Wikia change begin - @author: wladek
 		$this->recordPerformanceStats( $wikitextSize, strlen($text) );
 		// Wikia change end
@@ -1263,6 +1264,11 @@ class Parser {
 					[0-9Xx]                 # check digit
 					\b)
 			)!xu', array( &$this, 'magicLinkCallback' ), $text );
+
+		if ( preg_last_error() !== 0 ) {
+			\Wikia\Logger\WikiaLogger::instance()->error( 'PCRE error', [ 'preg_last_error' => preg_last_error() ] );
+		}
+
 		wfProfileOut( __METHOD__ );
 		return $text;
 	}
@@ -3387,6 +3393,7 @@ class Parser {
 		# SUBST
 		wfProfileIn( __METHOD__.'-modifiers' );
 		if ( !$found ) {
+			Wikia\Util\Assert::true( $this->mSubstWords instanceof MagicWordArray, 'Parser::mSubstWords should be an instance of MagicWordArray', [ 'part1' => $part1 ] ); // ER-9507
 
 			$substMatch = $this->mSubstWords->matchStartAndRemove( $part1 );
 
@@ -3751,9 +3758,9 @@ class Parser {
 		}
 
 		# wikia start
-		global $wgEnableContextLinkTemplateParsing;
-		if ( $wgEnableContextLinkTemplateParsing ) {
-			wfRunHooks( 'Parser::endBraceSubstitution', array( $originalTitle, &$ret['text'] ) );
+		global $wgEnableContextLinkTemplateParsing, $wgEnableInfoIconTemplateParsing;
+		if ( $wgEnableContextLinkTemplateParsing || $wgEnableInfoIconTemplateParsing ) {
+			wfRunHooks( 'Parser::endBraceSubstitution', array( $originalTitle, &$ret['text'], &$this ) );
 		}
 		# wikia end
 
@@ -4022,9 +4029,14 @@ class Parser {
 
 		$text = Http::get( $url );
 		if ( !$text ) {
-			# wikia start
-			Wikia::log(__METHOD__, false, "Scary transclusion failed for <{$url}>");
-			# wikia end
+			// Wikia change - begin
+			if ( $text === '' ) {
+				Wikia\Logger\WikiaLogger::instance()->error( __METHOD__ . ' - empty response', [
+					'url' => $url,
+				] );
+			}
+			// Wikia change - end
+
 			return wfMsgForContent( 'scarytranscludefailed', $url );
 		}
 

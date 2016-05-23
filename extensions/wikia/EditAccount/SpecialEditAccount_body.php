@@ -18,6 +18,9 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	exit( 1 );
 }
 
+use Wikia\DependencyInjection\Injector;
+use Wikia\Service\Helios\HeliosClient;
+
 class EditAccount extends SpecialPage {
 	/** @var User */
 	var $mUser = null;
@@ -421,6 +424,11 @@ class EditAccount extends SpecialPage {
 			$mStatusMsg = wfMessage( 'editaccount-success-close', $user->mName )->plain();
 
 			wfRunHooks( 'EditAccountClosed', array( $user ) );
+
+			/** @var HeliosClient $heliosClient */
+			$heliosClient = Injector::getInjector()->get(HeliosClient::class);
+			$heliosClient->forceLogout($user->getId());
+
 			return true;
 
 		} else {
@@ -528,23 +536,6 @@ class EditAccount extends SpecialPage {
 		// This suffix shouldn't reduce the entropy of the intentionally scrambled password.
 		$REQUIRED_CHARS = "A1a";
 		return (wfGenerateToken() . $REQUIRED_CHARS);
-	}
-
-	/** Hook for storing historical log of email changes **/
-	public static function logEmailChanges($user, $new_email, $old_email) {
-		global $wgExternalSharedDB, $wgUser, $wgRequest;
-		if ( $wgExternalSharedDB && isset( $new_email ) && isset( $old_email ) ) {
-			$dbw = wfGetDB( DB_MASTER, array(), $wgExternalSharedDB );
-			$dbw->insert(
-				'user_email_log',
-				['user_id' => $user->getId(),
-				 'old_email' => $old_email,
-				 'new_email' => $new_email,
-				 'changed_by_id' => $wgUser->getId(),
-				 'changed_by_ip' => $wgRequest->getIP()		// stored as string
-				]);
-		}
-		return true;
 	}
 
 	public function displayLogData() {

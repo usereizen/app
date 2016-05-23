@@ -372,7 +372,7 @@ class MWMemcached {
 		} else {
 			$this->stats['delete'] = 1;
 		}
-		$cmd = "delete $key $time\r\n";
+		$cmd = "delete $key\r\n";
 		if( !$this->_safe_fwrite( $sock, $host, $cmd, strlen( $cmd ) ) ) {
 			$this->_dead_sock( $sock );
 			return false;
@@ -1201,7 +1201,7 @@ class MWMemcached {
 		if ( $len > self::MEMCACHED_ITEM_MAX_SIZE - 2 ) {
 			// default item_max_size is 1mb, 2 characters are reserved for trailing "\r\n"
 			if ( class_exists( 'Wikia\\Logger\\WikiaLogger' ) ) {
-				\Wikia\Logger\WikiaLogger::instance()->debug( 'MemcachedClient: large value' , [
+				\Wikia\Logger\WikiaLogger::instance()->error( 'MemcachedClient: large value' , [
 					'exception' => new Exception(),
 					'key' => $key,
 					'len' => $len,

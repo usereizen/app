@@ -121,6 +121,8 @@ class CF_Http
     private $_cdn_acl_user_agent;
     private $_cdn_acl_referrer;
 
+    const PUT_TIMEOUT_MS = 30000; # Wikia change / PLATFORM-1788
+
     function __construct($api_version)
     {
         $this->dbug = False;
@@ -866,6 +868,7 @@ class CF_Http
         }
 
         $this->_init($conn_type);
+        curl_setopt($this->connections[$conn_type], CURLOPT_TIMEOUT_MS, self::PUT_TIMEOUT_MS); # Wikia change / PLATFORM-1788
         curl_setopt($this->connections[$conn_type],
                 CURLOPT_INFILE, $fp);
         if (!$obj->content_length) {
@@ -1510,7 +1513,7 @@ class CF_Http
 	// Wikia change - begin
 	// retry request in case of an error
 	const MAX_RETRIES = 5;
-	const RETRY_DELAY = 1000; // ms
+	const RETRY_DELAY = 250; // ms
 
 	private function _send_request($conn_type, $url_path, $hdrs=NULL, $method="GET", $force_new=False) {
 		$retriesLeft = self::MAX_RETRIES;
