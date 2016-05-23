@@ -79,13 +79,17 @@ switch ($TEST) {
 			echo "\n";
 		}
 		call_static();
-		uopz_rename($className,$methodName,$savedName);
-		uopz_function($className, $methodName, function() {
+
+		uopz_set_return($className, $methodName, function() {
 			echo "mocked TestStatic::test\n";
-		});
+		}, true /* execute closure */);
+
+		echo "### Mock in place\n";
 		call_static();
-		uopz_rename($className,$savedName,$methodName);
-		uopz_delete($className,$savedName);
+
+		uopz_unset_return($className, $methodName);
+
+		echo "### Mock removed\n";
 		call_static();
 		break;
 	case 'ancestry':
