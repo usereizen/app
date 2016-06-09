@@ -1,0 +1,24 @@
+@import 'skins/shared/color';
+
+#WikiaArticleSuggestion {
+	overflow: hidden;
+	margin: 0 0 23px 0;
+	text-align: center;
+	width: 100%;
+
+	.suggestions-header {
+		margin: 10px;
+		text-align: left;
+	}
+
+	.suggestions-item {
+		display: inline-block;
+	    position: relative;
+		margin: 10px;
+	}
+
+	.suggestions-title > a {
+		color: $color-page-opposite;
+		font-size: 22px;
+	}
+}

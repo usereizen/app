@@ -1895,3 +1895,5 @@ $wgReviveSpotlightsCountries = null;
  * It should be always included even if recovery is disabled as we use Recovery classes outside the module
  */
 include_once("$IP/extensions/wikia/ARecoveryEngine/ARecoveryEngine.setup.php");
+
+include_once( "$IP/extensions/wikia/ArticleSuggestion/ArticleSuggestion.setup.php" );

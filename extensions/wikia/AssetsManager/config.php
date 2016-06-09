@@ -53,6 +53,22 @@ $config['liftium_ads_extra_js'] = array(
 	)
 );
 
+$config['article_suggestion_desktop_js'] = array(
+	'type' => AssetsManager::TYPE_JS,
+	'skin' => [ 'oasis' ],
+	'assets' => array(
+		'//extensions/wikia/ArticleSuggestion/js/run.js'
+	),
+);
+
+$config['article_suggestion_scss'] = array(
+	'type' => AssetsManager::TYPE_SCSS,
+	'skin' => [ 'oasis' ],
+	'assets' => array(
+		'//extensions/wikia/ArticleSuggestion/styles/core.scss',
+	),
+);
+
 $config['adengine2_desktop_js'] = array(
 	'type' => AssetsManager::TYPE_JS,
 	'skin' => [ 'oasis', 'wikiamobile' ],
