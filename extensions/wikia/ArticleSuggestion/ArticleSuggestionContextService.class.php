@@ -16,10 +16,10 @@ class ArticleSuggestionContextService {
 
 			// Mock article suggestions
 			$suggestions = array(
-				array("130814", 2225),
-				array("130814", 2119),
-				array("130814", 3841),
-				array("130814", 4278),
+				array("130814", 43615),
+				array("130814", 2125),
+				array("130814", 8218),
+				array("130814", 1461),
 			);
 
 			$uid = User::idFromName( $wg->User->getName() );
