@@ -19,7 +19,6 @@ class ArticleSuggestionContextService {
 				array("130814", 43615, "http://i.imgur.com/J2SesCg.jpg"),
 				array("130814", 2125,  "http://i.imgur.com/Zv2BlHC.png"),
 				array("130814", 8218,  "http://i.imgur.com/fv7E78K.jpg"),
-				array("130814", 1461,  "http://i.imgur.com/y8dYOp5.png"),
 			);
 
 			$uid = User::idFromName( $wg->User->getName() );
