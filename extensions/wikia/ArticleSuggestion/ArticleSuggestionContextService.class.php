@@ -16,10 +16,10 @@ class ArticleSuggestionContextService {
 
 			// Mock article suggestions
 			$suggestions = array(
-				array("130814", 43615),
-				array("130814", 2125),
-				array("130814", 8218),
-				array("130814", 1461),
+				array("130814", 43615, "http://i.imgur.com/J2SesCg.jpg"),
+				array("130814", 2125,  "http://i.imgur.com/Zv2BlHC.png"),
+				array("130814", 8218,  "http://i.imgur.com/fv7E78K.jpg"),
+				array("130814", 1461,  "http://i.imgur.com/y8dYOp5.png"),
 			);
 
 			$uid = User::idFromName( $wg->User->getName() );
@@ -27,12 +27,12 @@ class ArticleSuggestionContextService {
 			foreach ($suggestions as $suggestion) {
 				$wikiId = $suggestion[0];
 				$pageId = $suggestion[1];
+				$image  = $suggestion[2];
+
 				$globalTitle = GlobalTitle::newFromId($pageId, $wikiId);
 				$title = $globalTitle->getText();
 				$url = $globalTitle->getFullURL();
-				$themeSettings = unserialize(WikiFactory::getVarByName('wgOasisThemeSettings', $wikiId)->cv_value);
-				$logoUrl = $themeSettings['wordmark-image-url'];
-				$data[] = array($logoUrl, $url, $title);
+				$data[] = array($image, $url, $title);
 			}
 
 			return [
