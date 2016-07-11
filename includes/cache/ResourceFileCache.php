@@ -18,7 +18,11 @@ class ResourceFileCache extends FileCacheBase {
 	public static function newFromContext( ResourceLoaderContext $context ) {
 		$cache = new self();
 
-		if ( $context->getOnly() === 'styles' ) {
+		// Wikia change - begin: Backporting ResourceLoader image module
+		if ( $context->getImage() ) {
+			$cache->mType = 'image';
+		} elseif ( $context->getOnly() === 'styles' ) {
+		// Wikia change - end
 			$cache->mType = 'css';
 		} else {
 			$cache->mType = 'js';
@@ -47,7 +51,10 @@ class ResourceFileCache extends FileCacheBase {
 		// Get all query values
 		$queryVals = $context->getRequest()->getValues();
 		foreach ( $queryVals as $query => $val ) {
-			if ( $query === 'modules' || $query === 'version' || $query === '*' ) {
+			// Wikia change - begin: Backporting ResourceLoader image module
+			if ( in_array( $query, array( 'modules', 'image', 'variant', 'version', '*' ) ) ) {
+				// Use file cache regardless of the value of this parameter
+			// Wikia change - end
 				continue; // note: &* added as IE fix
 			} elseif ( $query === 'skin' && $val === $wgDefaultSkin ) {
 				continue;
@@ -57,7 +64,11 @@ class ResourceFileCache extends FileCacheBase {
 				continue;
 			} elseif ( $query === 'debug' && $val === 'false' ) {
 				continue;
+			// Wikia change - begin: Backporting ResourceLoader image module
+			} elseif ( $query === 'format' && $val === 'rasterized' ) {
+				continue;
 			}
+			// Wikia change - end
 			return false;
 		}
 		return true; // cacheable

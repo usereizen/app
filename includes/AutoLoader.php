@@ -714,6 +714,10 @@ $wgAutoloadLocalClasses = array(
 	'ResourceLoaderContext' => 'includes/resourceloader/ResourceLoaderContext.php',
 	'ResourceLoaderFileModule' => 'includes/resourceloader/ResourceLoaderFileModule.php',
 	'ResourceLoaderFilePageModule' => 'includes/resourceloader/ResourceLoaderFilePageModule.php',
+	# Wikia change - begin: Backporting ResourceLoader image module
+	'ResourceLoaderImage' => __DIR__ . '/includes/resourceloader/ResourceLoaderImage.php',
+	'ResourceLoaderImageModule' => __DIR__ . '/includes/resourceloader/ResourceLoaderImageModule.php',
+	# Wikia change - end
 	'ResourceLoaderModule' => 'includes/resourceloader/ResourceLoaderModule.php',
 	'ResourceLoaderNoscriptModule' => 'includes/resourceloader/ResourceLoaderNoscriptModule.php',
 	'ResourceLoaderSiteModule' => 'includes/resourceloader/ResourceLoaderSiteModule.php',

@@ -39,6 +39,10 @@ class ResourceLoaderContext {
 	protected $only;
 	protected $version;
 	protected $hash;
+	protected $image;
+	protected $variant;
+	protected $format;
+	protected $imageObj;
 
 	// Wikia change - begin
 	protected $sassParams;
@@ -67,6 +71,12 @@ class ResourceLoaderContext {
 		$this->debug     = $request->getFuzzyBool( 'debug', $wgResourceLoaderDebug );
 		$this->only      = $request->getVal( 'only' );
 		$this->version   = $request->getVal( 'version' );
+
+		// Image requests
+		$this->image = $request->getVal( 'image' );
+		$this->variant = $request->getVal( 'variant' );
+		$this->format = $request->getVal( 'format' );
+
 		// Wikia - change begin - @author: wladek
 		$this->sassParams = array();
 		foreach ($request->getValues() as $key => $value) {
@@ -214,6 +224,53 @@ class ResourceLoaderContext {
 
 	public function getSassParams() {
 		return $this->sassParams;
+	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getImage() {
+		return $this->image;
+	}
+	/**
+	 * @return string|null
+	 */
+	public function getVariant() {
+		return $this->variant;
+	}
+	/**
+	 * @return string|null
+	 */
+	public function getFormat() {
+		return $this->format;
+	}
+	/**
+	 * If this is a request for an image, get the ResourceLoaderImage object.
+	 *
+	 * @since 1.25
+	 * @return ResourceLoaderImage|bool false if a valid object cannot be created
+	 */
+	public function getImageObj() {
+		if ( $this->imageObj === null ) {
+			$this->imageObj = false;
+			if ( !$this->image ) {
+				return $this->imageObj;
+			}
+			$modules = $this->getModules();
+			if ( count( $modules ) !== 1 ) {
+				return $this->imageObj;
+			}
+			$module = $this->getResourceLoader()->getModule( $modules[0] );
+			if ( !$module || !$module instanceof ResourceLoaderImageModule ) {
+				return $this->imageObj;
+			}
+			$image = $module->getImage( $this->image );
+			if ( !$image ) {
+				return $this->imageObj;
+			}
+			$this->imageObj = $image;
+		}
+		return $this->imageObj;
 	}
 
 	/**

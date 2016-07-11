@@ -47,6 +47,9 @@ class ResourceLoader {
 	/** array( 'source-id' => array( 'loadScript' => 'http://.../load.php' ) ) **/
 	protected $sources = array();
 
+	/** @var bool */
+	protected $hasErrors = false;
+
 	/* Protected Methods */
 
 	/**
@@ -518,9 +521,6 @@ class ResourceLoader {
 
 		wfProfileOut( __METHOD__.'-getModifiedTime' );
 
-		// Send content type and cache related headers
-		$this->sendResponseHeaders( $context, $mtime );
-
 		// If there's an If-Modified-Since header, respond with a 304 appropriately
 		if ( $this->tryRespondLastModified( $context, $mtime ) ) {
 			wfProfileOut( __METHOD__ );
@@ -530,14 +530,31 @@ class ResourceLoader {
 		// Generate a response
 		$response = $this->makeModuleResponse( $context, $modules, $missing );
 
-		// Prepend comments indicating exceptions
-		$response = $errors . $response;
-
 		// Capture any PHP warnings from the output buffer and append them to the
 		// response in a comment if we're in debug mode.
 		if ( $context->getDebug() && strlen( $warnings = ob_get_contents() ) ) {
-			$response = $this->makeComment( $warnings ) . $response;
+			$errors .= $this->makeComment( $warnings );
+			$this->hasErrors = true;
 		}
+
+		if ( $context->getImageObj() && !$response ) {
+			$errors .= self::makeComment( "Image generation failed." );
+			$this->hasErrors = true;
+		}
+
+		if ( $this->hasErrors ) {
+			if ( $context->getImageObj() ) {
+				// Bail, we can't show both the error messages and the response when it's not CSS or JS.
+				// sendResponseHeaders() will handle this sensibly.
+				$response = $errors;
+			} else {
+				// Prepend comments indicating exceptions
+				$response = $errors . $response;
+			}
+		}
+
+		// Send content type and cache related headers
+		$this->sendResponseHeaders( $context, $mtime, $this->hasErrors );
 
 		// Remove the output buffer and output the response
 		ob_end_clean();
@@ -554,8 +571,8 @@ class ResourceLoader {
 		echo $response;
 
 		// Save response to file cache unless there are errors
-		if ( isset( $fileCache ) && !$errors && !$missing ) {
-			// Cache single modules...and other requests if there are enough hits
+		if ( isset( $fileCache ) && !$this->hasErrors && !$missing ) {
+			// Cache single modules and images...and other requests if there are enough hits
 			if ( ResourceFileCache::useFileCache( $context ) ) {
 				if ( $fileCache->isCacheWorthy() ) {
 					$fileCache->saveText( $response );
@@ -572,9 +589,10 @@ class ResourceLoader {
 	 * Send content type and last modified headers to the client.
 	 * @param $context ResourceLoaderContext
 	 * @param $mtime string TS_MW timestamp to use for last-modified
+	 * @param bool $errors Whether there are commented-out errors in the response
 	 * @return void
 	 */
-	protected function sendResponseHeaders( ResourceLoaderContext $context, $mtime ) {
+	protected function sendResponseHeaders( ResourceLoaderContext $context, $mtime, $errors ) {
 		global $wgResourceLoaderMaxage;
 		// If a version wasn't specified we need a shorter expiry time for updates
 		// to propagate to clients quickly
@@ -592,7 +610,13 @@ class ResourceLoader {
 		wfRunHooks( 'ResourceLoaderModifyMaxAge',[ $this, $context, $mtime, &$maxage, &$smaxage ] );
 		// Wikia - change end
 
-		if ( $context->getOnly() === 'styles' ) {
+		if ( $context->getImageObj() ) {
+			if ( $errors ) {
+				header( 'Content-Type: text/plain; charset=utf-8' );
+			} else {
+				$context->getImageObj()->sendResponseHeaders( $context );
+			}
+		} elseif ( $context->getOnly() === 'styles' ) {
 			header( 'Content-Type: text/css; charset=utf-8' );
 		} else {
 			header( 'Content-Type: text/javascript; charset=utf-8' );
@@ -743,6 +767,14 @@ class ResourceLoader {
 		}
 
 		wfProfileIn( __METHOD__ );
+
+		$image = $context->getImageObj();
+		if ( $image ) {
+			$data = $image->getImageData( $context );
+			wfProfileOut( __METHOD__ );
+			return $data;
+		}
+
 		// Pre-fetch blobs
 		if ( $context->shouldIncludeMessages() ) {
 			try {
