@@ -33,6 +33,7 @@
 				newComment;
 
 			// fire event when new article comment is/will be added to DOM
+			console.log('ArticleComments.js about to fire');
 			mw.hook('wikipage.content').fire($articleComments);
 
 			// jQuery object could have been cached before init method
