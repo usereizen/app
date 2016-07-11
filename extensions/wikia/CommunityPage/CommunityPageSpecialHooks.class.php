@@ -75,10 +75,10 @@ class CommunityPageSpecialHooks {
 			\Wikia::addAssetsToOutput( 'community_page_benefits_scss' );
 		}
 
-		if ( !$user->isAnon() && !$user->isAllowed( 'first-edit-dialog-exempt' ) ) {
+		//if ( !$user->isAnon() && !$user->isAllowed( 'first-edit-dialog-exempt' ) ) {
 			\Wikia::addAssetsToOutput( 'community_page_new_user_modal_js' );
 			\Wikia::addAssetsToOutput( 'community_page_new_user_modal_scss' );
-		}
+		//}
 
 		return true;
 	}
@@ -128,9 +128,9 @@ class CommunityPageSpecialHooks {
 		// Set cookie to show first edit modal to user
 		$user = User::newFromId( $userId );
 
-		if ( !$user->isAllowed( 'first-edit-dialog-exempt' ) ) {
+		//if ( !$user->isAllowed( 'first-edit-dialog-exempt' ) ) {
 			setcookie( self::FIRST_EDIT_COOKIE_KEY, true, time()+60, $wgCookiePath, $wgCookieDomain );
-		}
+		//}
 
 		return true;
 	}

@@ -116,5 +116,7 @@ require([
 		mw.hook('postEdit').add( function() {
 			openModalOnFirstEdit();
 		});
+
+		openModal();
 	});
 });
