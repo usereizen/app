@@ -97,7 +97,7 @@ require([
 		var cookieName = 'community-page-first-time',
 			cookie = cookies.get(cookieName);
 
-		console.log(`cookie = ${cookie}`);
+		console.log(`openModalOnFirstEdit cookie = ${cookie}`);
 
 		// If cookie is set on load, show dialog, this happens after CE edit
 		if (cookie) {
@@ -116,17 +116,18 @@ require([
 
 		// Hook to show modal after VE edit completes (no page reload)
 		mw.hook('postEdit').add( function() {
-			console.log('postEdit');
+			console.log('postEdit HOOK');
 			openModalOnFirstEdit();
 		});
 
 		// Hook to show modal after comment (no page reload)
 		mw.hook('wikipage.content').add( function(c) {
-			console.log('wikipage.content');
+			console.log('wikipage.content HOOK');
 			console.log(c);
 			openModalOnFirstEdit();
 		});
 
+		window.openModal = openModal;
 		//openModal();
 	});
 });
