@@ -1657,6 +1657,11 @@ class ArticleComment {
 			return false;
 		}
 
+		// VOLDEV-112: Disable adding article comments to redirect pages
+		if ( $title->isRedirect() ) {
+			return false;
+		}
+
 		$isBlog = ( $wg->EnableBlogArticles && ArticleComment::isBlog( $title ) );
 		if ( $isBlog ) {
 			$props = BlogArticle::getProps( $title->getArticleID() );
