@@ -8,8 +8,6 @@ class AdController extends WikiaController {
 		$this->includeLabel = $this->request->getVal('includeLabel');
 		$this->onLoad = $this->request->getVal('onLoad');
 		$this->addToAdQueue = $this->request->getVal('addToAdQueue');*/
-
-		$this->skipRendering();
 		$this->forward( 'AdEngine2', 'Ad' );
 	}
 

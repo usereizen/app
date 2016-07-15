@@ -51,14 +51,18 @@ class AdEngine2Controller extends WikiaController {
 	 * Action to display an ad (or not)
 	 */
 	public function ad() {
-		$this->includeLabel = $this->request->getVal( 'includeLabel' );
-		$this->onLoad = $this->request->getVal( 'onLoad' );
-		$this->addToAdQueue = $this->request->getVal( 'addToAdQueue', true );
-		$this->pageTypesJson = json_encode( $this->request->getVal( 'pageTypes' ) );
-		$this->slotName = $this->request->getVal( 'slotName' );
-		$this->slotNameJson = json_encode( [ $this->slotName ] );
-		$this->showAd = AdEngine2Service::shouldShowAd( $this->pageTypes );
-		$this->msgAdEngineAdvertisement = wfMessage( 'adengine-advertisement' )->text();
+		$pageTypes = $this->request->getVal( 'pageTypes' );
+		$slotName = $this->request->getVal( 'slotName' );
+		$this->response->setValues( [
+			'includeLabel' => $this->request->getVal( 'includeLabel' ),
+			'onLoad' => $this->request->getVal( 'onLoad' ),
+			'addToAdQueue' => $this->request->getVal( 'addToAdQueue', true ),
+			'pageTypesJson' => json_encode( $pageTypes ),
+			'slotName' => $slotName,
+			'slotNameJson' => json_encode( [ $slotName ] ),
+			'showAd' => AdEngine2Service::shouldShowAd( $pageTypes ),
+			'msgAdEngineAdvertisement' => wfMessage( 'adengine-advertisement' )->text(),
+		] );
 
 		$this->response->setTemplateEngine( WikiaResponse::TEMPLATE_ENGINE_MUSTACHE );
 	}

@@ -7,16 +7,14 @@
     {{/includeLabel}}
     {{#addToAdQueue}}
     <script>
-    /* <![CDATA[ */
         {{#onLoad}}
             wgAfterContentAndJS.push(function () {
-                window.adslots2.push({{slotNameJson}});
+                window.adslots2.push({{{slotNameJson}}});
             });
         {{/onLoad}}
         {{^onload}}
-            window.adslots2.push({{slotNameJson}});
+            window.adslots2.push({{{slotNameJson}}});
         {{/onload}}
-    /* ]]> */
     </script>
     {{/addToAdQueue}}
 </div>
