@@ -1,0 +1,27 @@
+<!-- POWERED BY MUSTACHE AND PROUD OF IT -->
+{{#showAd}}
+<!-- BEGIN SLOTNAME: {{slotName}} -->
+<div id="{{slotName}}" class="wikia-ad noprint default-height">
+    {{#includeLabel}}
+    <label class="wikia-ad-label">{{msgAdEngineAdvertisement}}</label>
+    {{/includeLabel}}
+    {{#addToAdQueue}}
+    <script>
+    /* <![CDATA[ */
+        {{#onLoad}}
+            wgAfterContentAndJS.push(function () {
+                window.adslots2.push({{slotNameJson}});
+            });
+        {{/onLoad}}
+        {{^onload}}
+            window.adslots2.push({{slotNameJson}});
+        {{/onload}}
+    /* ]]> */
+    </script>
+    {{/addToAdQueue}}
+</div>
+<!-- END SLOTNAME: {{slotName}} -->
+{{/showAd}}
+{{^showAd}}
+<!-- NO AD {{slotName}} (levels: {{pageTypesJson}}) -->
+{{/showAd}}
