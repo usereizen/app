@@ -5,8 +5,8 @@ class MyToolsController extends WikiaController {
 	protected $nav_urls;
 
 	public function init() {
-		$this->content_actions = $this->app->getSkinTemplateObj()->data['content_actions'];
-		$this->nav_urls = $this->app->getSkinTemplateObj()->data['nav_urls'];
+		$this->content_actions = $this->app->getWikiaSkinTemplateObj()->data['content_actions'];
+		$this->nav_urls = $this->app->getWikiaSkinTemplateObj()->data['nav_urls'];
 	}
 
 	public function executeIndex($params) {

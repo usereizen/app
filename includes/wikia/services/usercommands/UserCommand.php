@@ -182,7 +182,7 @@
 
 		static public function needSkinData() {
 			if (is_null(self::$skinData)) {
-				$skinTemplateObj = F::app()->getSkinTemplateObj();
+				$skinTemplateObj = F::app()->getWikiaSkinTemplateObj();
 				if ( $skinTemplateObj ) {
 					self::$skinData = array(
 						'content_actions' => $skinTemplateObj->get('content_actions'),

@@ -31,7 +31,7 @@ class WikiaMobileService extends WikiaService {
 
 	function init(){
 		$this->skin = RequestContext::getMain()->getSkin();
-		$this->templateObject = $this->app->getSkinTemplateObj();
+		$this->templateObject = $this->app->getWikiaSkinTemplateObj();
 		$this->assetsManager = AssetsManager::getInstance();
 	}
 

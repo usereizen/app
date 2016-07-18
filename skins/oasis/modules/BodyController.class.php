@@ -4,7 +4,7 @@ class BodyController extends WikiaController {
 	private static $onEditPage;
 
 	public function init() {
-		$this->subtitle = $this->app->getSkinTemplateObj()->data['subtitle'];
+		$this->subtitle = $this->app->getWikiaSkinTemplateObj()->data['subtitle'];
 
 		$this->afterBodyHtml = '';
 		$this->afterContentHookText = '';
@@ -322,7 +322,7 @@ class BodyController extends WikiaController {
 		$this->wg->EnableInfoBoxTest = $wgEnableInfoBoxTest;
 
 		// Replaces ContentDisplayModule->index()
-		$this->bodytext = $this->app->getSkinTemplateObj()->data['bodytext'];
+		$this->bodytext = $this->app->getWikiaSkinTemplateObj()->data['bodytext'];
 
 		$this->railModuleList = $this->getRailModuleList();
 		// this hook allows adding extra HTML just after <body> opening tag

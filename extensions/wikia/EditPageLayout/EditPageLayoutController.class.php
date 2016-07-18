@@ -12,7 +12,7 @@ class EditPageLayoutController extends WikiaController {
 	const TITLE_MAX_LENGTH = 30;
 
 	public function init() {
-		$this->bodytext = $this->app->getSkinTemplateObj()->data['bodytext'];
+		$this->bodytext = $this->app->getWikiaSkinTemplateObj()->data['bodytext'];
 	}
 
 	/**

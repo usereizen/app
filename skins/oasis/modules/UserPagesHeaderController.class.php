@@ -11,7 +11,7 @@ class UserPagesHeaderController extends WikiaController {
 	var $content_actions;
 
 	public function init() {
-		$this->content_actions = $this->app->getSkinTemplateObj()->data['content_actions'];
+		$this->content_actions = $this->app->getWikiaSkinTemplateObj()->data['content_actions'];
 		$this->isUserProfilePageExt = false;
 		$this->actionMenu = array();
 		$this->comments = null;

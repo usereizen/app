@@ -52,7 +52,7 @@ class SkinWikiaMobile extends WikiaSkin {
 
 class WikiaMobileTemplate extends WikiaSkinTemplate {
 	function execute() {
-		$this->app->setSkinTemplateObj( $this );
+		$this->app->setWikiaSkinTemplateObj( $this );
 		$response = $this->app->sendRequest( 'WikiaMobileService', 'index' );
 		$response->sendHeaders();
 		$response->render();

@@ -80,11 +80,11 @@ class ControllerTest extends WikiaBaseTest {
 	function testSetGetSkinTemplate() {
 		$template = new OasisTemplate();
 
-		F::app()->setSkinTemplateObj($template);
+		F::app()->setWikiaSkinTemplateObj($template);
 
 		$this->assertEquals(
 			$template,
-			F::app()->getSkinTemplateObj()
+			F::app()->getWikiaSkinTemplateObj()
 		);
 	}
 

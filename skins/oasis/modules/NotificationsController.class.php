@@ -24,7 +24,7 @@ class NotificationsController extends WikiaController {
 
 	public function init() {
 		$this->notifications = null;
-		$this->usernewmessages = $this->app->getSkinTemplateObj()->data['usernewmessages'];
+		$this->usernewmessages = $this->app->getWikiaSkinTemplateObj()->data['usernewmessages'];
 	}
 	/**
 	 * Add notification message to the stack

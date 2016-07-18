@@ -29,7 +29,7 @@ class WikiaMobileServiceTest extends WikiaBaseTest {
 		$this->wikiaMobileService->init();
 
 		$this->assertAttributeEquals( RequestContext::getMain()->getSkin(), 'skin', $this->wikiaMobileService );
-		$this->assertAttributeEquals( $this->app->getSkinTemplateObj(), 'templateObject', $this->wikiaMobileService );
+		$this->assertAttributeEquals( $this->app->getWikiaSkinTemplateObj(), 'templateObject', $this->wikiaMobileService );
 		$this->assertAttributeEquals( AssetsManager::getInstance(), 'assetsManager', $this->wikiaMobileService );
 	}
 }

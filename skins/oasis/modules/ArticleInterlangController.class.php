@@ -7,8 +7,8 @@
 
 class ArticleInterlangController extends WikiaController {
 	public function init() {
-		if($this->app->getSkinTemplateObj()) {
-			$this->language_urls = $this->app->getSkinTemplateObj()->data['language_urls'];
+		if($this->app->getWikiaSkinTemplateObj()) {
+			$this->language_urls = $this->app->getWikiaSkinTemplateObj()->data['language_urls'];
 		} else {
 			$this->language_urls = array();
 		}

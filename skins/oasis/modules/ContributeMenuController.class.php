@@ -19,7 +19,7 @@ class ContributeMenuController extends WikiaController {
 	public function executeIndex() {
 		// add "edit this page" item
 		$dropdownItems = array();
-		$content_actions = $this->app->getSkinTemplateObj()->data[ 'content_actions' ];
+		$content_actions = $this->app->getWikiaSkinTemplateObj()->data[ 'content_actions' ];
 		if ( isset($content_actions[ 'edit' ] ) ) {
 			$dropdownItems[ 'edit' ] = $this->getEditPageItem( $content_actions[ 'edit' ][ 'href' ] );
 		}

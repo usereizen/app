@@ -154,7 +154,7 @@ class GlobalNavigationAccountNavigationController extends WikiaController {
 	 * Modify personal URLs list.
 	 */
 	private function setupPersonalUrls() {
-		$this->personalUrls = F::app()->getSkinTemplateObj()->data[ 'personal_urls' ];
+		$this->personalUrls = F::app()->getWikiaSkinTemplateObj()->data[ 'personal_urls' ];
 
 		if ( $this->isAnon ) {
 			$query = F::app()->wg->Request->getValues();

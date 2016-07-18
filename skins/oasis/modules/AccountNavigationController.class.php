@@ -59,7 +59,7 @@ class AccountNavigationController extends WikiaController {
 		global $wgUser;
 
 		// Import the starting set of urls from the skin template
-		$this->personal_urls = F::app()->getSkinTemplateObj()->data['personal_urls'];
+		$this->personal_urls = F::app()->getWikiaSkinTemplateObj()->data['personal_urls'];
 		if ($wgUser->isAnon()) {
 			// add login and register links for anons
 			//$skin = RequestContext::getMain()->getSkin();

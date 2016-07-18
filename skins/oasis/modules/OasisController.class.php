@@ -24,7 +24,7 @@ class OasisController extends WikiaController {
 
 	public function init() {
 		wfProfileIn(__METHOD__);
-		$skinVars = $this->app->getSkinTemplateObj()->data;
+		$skinVars = $this->app->getWikiaSkinTemplateObj()->data;
 
 		$this->assetsManager = AssetsManager::getInstance();
 		$this->pageTitle = $skinVars['pagetitle'];
@@ -377,7 +377,7 @@ class OasisController extends WikiaController {
 			$jsLoader .= "<script src=\"{$url}\"></script>\n";
 		}
 
-		$tpl = $this->app->getSkinTemplateObj();
+		$tpl = $this->app->getWikiaSkinTemplateObj();
 
 		// $tpl->set( 'headscripts', $out->getHeadScripts() . $out->getHeadItems() );
 		// FIXME: we need to remove head items - i.e. <meta> tags
