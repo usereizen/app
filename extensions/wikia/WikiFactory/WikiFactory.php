@@ -1782,7 +1782,7 @@ class WikiFactory {
 		}
 
 		if ( $string ) {
-			$where[] = 'cv_name' . $dbr->buildLike( $dbr->anyString(), $string, $dbr->anyString() );
+			$where[] = "cv_name like '%$string%'";
 		}
 
 		if ( $defined === true && $wiki != 0 ) {
