@@ -126,13 +126,13 @@ class ApiOptions extends ApiBase {
 		return array(
 			'reset' => 'Resets preferences to the site defaults',
 			'change' => array( 'List of changes, formatted name=value (e.g. skin=monobook), ' .
-				'value cannot contain pipe characters. If no value is given (not ',
-				'even an equals sign), e.g., optionname|otheroption|..., the ' .
-				'option will be reset to its default value'
+							   'value cannot contain pipe characters. If no value is given (not ',
+							   'even an equals sign), e.g., optionname|otheroption|..., the ' .
+							   'option will be reset to its default value'
 			),
 			'optionname' => 'A name of a option which should have an optionvalue set',
 			'optionvalue' => 'A value of the option specified by the optionname, ' .
-				'can contain pipe characters',
+							 'can contain pipe characters',
 		);
 	}
 
@@ -158,7 +158,7 @@ class ApiOptions extends ApiBase {
 			'api.php?action=options&reset=&token=123ABC',
 			'api.php?action=options&change=skin=monobook|hideminor=1&token=123ABC',
 			'api.php?action=options&reset=&change=skin=monobook&optionname=nickname&' .
-				'optionvalue=[[User:Beau|Beau]]%20([[User_talk:Beau|talk]])&token=123ABC',
+			'optionvalue=[[User:Beau|Beau]]%20([[User_talk:Beau|talk]])&token=123ABC',
 		);
 	}
 

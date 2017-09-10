@@ -37,15 +37,6 @@ class UserrightsPage extends SpecialPage {
 	protected $mTarget;
 	protected $isself = false;
 
-	public static function userCanChangeRights( \User $user, $isself, $checkIfSelf = true ) {
-		$available = $user->changeableGroups();
-		return !empty( $available['add'] )
-		|| !empty( $available['remove'] )
-		|| ( ( $isself || !$checkIfSelf ) &&
-			( !empty( $available['add-self'] )
-				|| !empty( $available['remove-self'] ) ) );
-	}
-
 	/**
 	 * Add a rights log entry for an action.
 	 * @param User $user
@@ -102,7 +93,19 @@ class UserrightsPage extends SpecialPage {
 	}
 
 	public function userCanExecute( User $user ) {
-		return self::userCanChangeRights( $user, false, false );
+		return $this->userCanChangeRights( $user, false );
+	}
+
+	public function userCanChangeRights( $user, $checkIfSelf = true ) {
+		$available = $this->changeableGroups();
+		if ( $user->getId() == 0 ) {
+			return false;
+		}
+		return !empty( $available['add'] )
+			|| !empty( $available['remove'] )
+			|| ( ( $this->isself || !$checkIfSelf ) &&
+				( !empty( $available['add-self'] )
+				 || !empty( $available['remove-self'] ) ) );
 	}
 
 	/**
@@ -150,7 +153,7 @@ class UserrightsPage extends SpecialPage {
 			$this->isself = true;
 		}
 
-		if( !self::userCanChangeRights( $user, $this->isself, true ) ) {
+		if( !$this->userCanChangeRights( $user, true ) ) {
 			// @todo FIXME: There may be intermediate groups we can mention.
 			$msg = $user->isAnon() ? 'userrights-nologin' : 'userrights-notallowed';
 			throw new PermissionsError( null, array( array( $msg ) ) );
@@ -466,12 +469,12 @@ class UserrightsPage extends SpecialPage {
 		$grouplist = '';
 		$count = count( $list );
 		if( $count > 0 ) {
-			$grouplist = wfMessage( 'userrights-groupsmember', $count)->parse();
+			$grouplist = $this->msg( 'userrights-groupsmember', $count, $user->getName() )->parse();
 			$grouplist = '<p>' . $grouplist  . ' ' . $this->getLanguage()->listToText( $list ) . "</p>\n";
 		}
 		$count = count( $autolist );
 		if( $count > 0 ) {
-			$autogrouplistintro = wfMessage( 'userrights-groupsmember-auto', $count)->parse();
+			$autogrouplistintro = $this->msg( 'userrights-groupsmember-auto', $count, $user->getName() )->parse();
 			$grouplist .= '<p>' . $autogrouplistintro  . ' ' . $this->getLanguage()->listToText( $autolist ) . "</p>\n";
 		}
 
@@ -492,7 +495,7 @@ class UserrightsPage extends SpecialPage {
 			wfMessage( 'userrights-groups-help', $user->getName() )->parse() .
 			$grouplist .
 			Xml::tags( 'p', null, $this->groupCheckboxes( $groups, $user ) ) .
-			Xml::openElement( 'table', array( 'border' => '0', 'id' => 'mw-userrights-table-outer' ) ) .
+			Xml::openElement( 'table', array( 'id' => 'mw-userrights-table-outer' ) ) .
 				"<tr>
 					<td class='mw-label'>" .
 						Xml::label( wfMsg( 'userrights-reason' ), 'wpReason' ) .
@@ -577,7 +580,7 @@ class UserrightsPage extends SpecialPage {
 		}
 
 		# Build the HTML table
-		$ret .=	Xml::openElement( 'table', array( 'border' => '0', 'class' => 'mw-userrights-groups' ) ) .
+		$ret .=	Xml::openElement( 'table', array( 'class' => 'mw-userrights-groups' ) ) .
 			"<tr>\n";
 		foreach( $columns as $name => $column ) {
 			if( $column === array() )
@@ -619,7 +622,8 @@ class UserrightsPage extends SpecialPage {
 	 * @param $output OutputPage to use
 	 */
 	protected function showLogFragment( $user, $output ) {
-		$output->addHTML( Xml::element( 'h2', null, LogPage::logName( 'rights' ) . "\n" ) );
+		$rightsLogPage = new LogPage( 'rights' );
+		$output->addHTML( Xml::element( 'h2', null, $rightsLogPage->getName()->text() ) );
 		LogEventsList::showLogExtract( $output, 'rights', $user->getUserPage() );
 	}
 }

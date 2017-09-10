@@ -1,4 +1,25 @@
 <?php
+/**
+ * Interface definition for deletable items.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * @file
+ * @ingroup RevisionDelete
+ */
 
 /**
  * Abstract base class for a list of deletable items. The list class
@@ -37,7 +58,7 @@ abstract class RevDel_List extends RevisionListBase {
 		$this->res = false;
 		$dbw = wfGetDB( DB_MASTER );
 		$this->doQuery( $dbw );
-		$dbw->begin();
+		$dbw->begin( __METHOD__ );
 		$status = Status::newGood();
 		$missing = array_flip( $this->ids );
 		$this->clearFileOps();
@@ -110,7 +131,7 @@ abstract class RevDel_List extends RevisionListBase {
 
 		if ( $status->successCount == 0 ) {
 			$status->ok = false;
-			$dbw->rollback();
+			$dbw->rollback( __METHOD__ );
 			return $status;
 		}
 
@@ -121,7 +142,7 @@ abstract class RevDel_List extends RevisionListBase {
 		$status->merge( $this->doPreCommitUpdates() );
 		if ( !$status->isOK() ) {
 			// Fatal error, such as no configured archive directory
-			$dbw->rollback();
+			$dbw->rollback( __METHOD__ );
 			return $status;
 		}
 
@@ -136,7 +157,7 @@ abstract class RevDel_List extends RevisionListBase {
 			'authorIds' => $authorIds,
 			'authorIPs' => $authorIPs
 		) );
-		$dbw->commit();
+		$dbw->commit( __METHOD__ );
 
 		// Clear caches
 		$status->merge( $this->doPostCommitUpdates() );

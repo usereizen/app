@@ -27,50 +27,90 @@
  */
 class ResourceLoaderLanguageDataModule extends ResourceLoaderModule {
 
-	protected $targets = array( 'desktop', 'mobile' );
-
+	protected $language;
 	/**
-	 * Get all the dynamic data for the content language to an array.
+	 * Get the grammar forms for the site content language.
 	 *
-	 * @param ResourceLoaderContext $context
 	 * @return array
 	 */
-	protected function getData( ResourceLoaderContext $context ) {
-		$language = Language::factory( $context->getLanguage() );
+	protected function getSiteLangGrammarForms() {
+		return $this->language->getGrammarForms();
+	}
+
+	/**
+	 * Get the plural forms for the site content language.
+	 *
+	 * @return array
+	 */
+	protected function getPluralRules() {
+		return $this->language->getPluralRules();
+	}
+
+	/**
+	 * Get the digit transform table for the content language
+	 * Seperator transform table also required here to convert
+	 * the . and , sign to appropriate forms in content language.
+	 *
+	 * @return array
+	 */
+	protected function getDigitTransformTable() {
+		$digitTransformTable = $this->language->digitTransformTable();
+		$separatorTransformTable = $this->language->separatorTransformTable();
+		if ( $digitTransformTable ) {
+			array_merge( $digitTransformTable, (array)$separatorTransformTable );
+		} else {
+			return $separatorTransformTable;
+		}
+		return $digitTransformTable;
+	}
+
+	/**
+	 * Get all the dynamic data for the content language to an array
+	 *
+	 * @return array
+	 */
+	protected function getData() {
 		return array(
-			'digitTransformTable' => $language->digitTransformTable(),
-			'separatorTransformTable' => $language->separatorTransformTable(),
-			'grammarForms' => $language->getGrammarForms(),
-			'pluralRules' => $language->getPluralRules(),
-			'digitGroupingPattern' => $language->digitGroupingPattern(),
+			'digitTransformTable' => $this->getDigitTransformTable(),
+			'grammarForms' => $this->getSiteLangGrammarForms(),
+			'pluralRules' => $this->getPluralRules(),
 		);
 	}
 
 	/**
-	 * @param ResourceLoaderContext $context
-	 * @return string JavaScript code
+	 * @param $context ResourceLoaderContext
+	 * @return string: JavaScript code
 	 */
 	public function getScript( ResourceLoaderContext $context ) {
+		$this->language = Language::factory( $context->getLanguage() );
 		return Xml::encodeJsCall( 'mw.language.setData', array(
-			$context->getLanguage(),
-			$this->getData( $context )
+			$this->language->getCode(),
+			$this->getData()
 		) );
 	}
 
 	/**
-	 * @param ResourceLoaderContext $context
-	 * @return int UNIX timestamp
+	 * @param $context ResourceLoaderContext
+	 * @return array|int|Mixed
 	 */
 	public function getModifiedTime( ResourceLoaderContext $context ) {
-		return max( 1, $this->getHashMtime( $context ) );
-	}
+		$this->language = Language::factory( $context ->getLanguage() );
+		$cache = wfGetCache( CACHE_ANYTHING );
+		$key = wfMemcKey( 'resourceloader', 'langdatamodule', 'changeinfo' );
 
-	/**
-	 * @param ResourceLoaderContext $context
-	 * @return string Hash
-	 */
-	public function getModifiedHash( ResourceLoaderContext $context ) {
-		return md5( serialize( $this->getData( $context ) ) );
+		$data = $this->getData();
+		$hash = md5( serialize( $data ) );
+
+		$result = $cache->get( $key );
+		if ( is_array( $result ) && $result['hash'] === $hash ) {
+			return $result['timestamp'];
+		}
+		$timestamp = wfTimestamp();
+		$cache->set( $key, array(
+			'hash' => $hash,
+			'timestamp' => $timestamp,
+		) );
+		return $timestamp;
 	}
 
 	/**

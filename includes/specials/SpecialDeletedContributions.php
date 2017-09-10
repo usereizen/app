@@ -99,17 +99,17 @@ class DeletedContribsPager extends IndexPager {
 		if ( isset( $this->mNavigationBar ) ) {
 			return $this->mNavigationBar;
 		}
-		$lang = $this->getLanguage();
-		$fmtLimit = $lang->formatNum( $this->mLimit );
+
 		$linkTexts = array(
-			'prev' => $this->msg( 'pager-newer-n', $fmtLimit )->escaped(),
-			'next' => $this->msg( 'pager-older-n', $fmtLimit )->escaped(),
+			'prev' => $this->msg( 'pager-newer-n' )->numParams( $this->mLimit )->escaped(),
+			'next' => $this->msg( 'pager-older-n' )->numParams( $this->mLimit )->escaped(),
 			'first' => $this->msg( 'histlast' )->escaped(),
 			'last' => $this->msg( 'histfirst' )->escaped()
 		);
 
 		$pagingLinks = $this->getPagingLinks( $linkTexts );
 		$limitLinks = $this->getLimitLinks();
+		$lang = $this->getLanguage();
 		$limits = $lang->pipeList( $limitLinks );
 
 		$this->mNavigationBar = "(" . $lang->pipeList( array( $pagingLinks['first'], $pagingLinks['last'] ) ) . ") " .
@@ -193,7 +193,7 @@ class DeletedContribsPager extends IndexPager {
 			$link = Linker::linkKnown(
 				$undelete,
 				$date,
-				array(),
+				array( 'class' => 'mw-changeslist-date' ),
 				array(
 					'target' => $page->getPrefixedText(),
 					'timestamp' => $rev->getTimestamp()
@@ -205,7 +205,11 @@ class DeletedContribsPager extends IndexPager {
 			$link = '<span class="history-deleted">' . $link . '</span>';
 		}
 
-		$pagelink = Linker::link( $page );
+		$pagelink = Linker::link(
+			$page,
+			null,
+			array( 'class' => 'mw-changeslist-title' )
+		);
 
 		if( $rev->isMinor() ) {
 			$mflag = ChangesList::flag( 'minor' );
@@ -224,7 +228,8 @@ class DeletedContribsPager extends IndexPager {
 				array( $last, $dellog, $reviewlink ) ) )->escaped()
 		);
 
-		$ret = "{$del}{$link} {$tools} . . {$mflag} {$pagelink} {$comment}";
+		$separator = '<span class="mw-changeslist-separator">. .</span>';
+		$ret = "{$del}{$link} {$tools} {$separator} {$mflag} {$pagelink} {$comment}";
 
 		# Denote if username is redacted for this edit
 		if( $rev->isDeleted( Revision::DELETED_USER ) ) {
@@ -262,6 +267,7 @@ class DeletedContributionsPage extends SpecialPage {
 	function execute( $par ) {
 		global $wgQueryPageDefaultLimit;
 		$this->setHeaders();
+		$this->outputHeader();
 
 		$user = $this->getUser();
 
@@ -295,6 +301,7 @@ class DeletedContributionsPage extends SpecialPage {
 			$out->addHTML( $this->getForm( '' ) );
 			return;
 		}
+		$this->getSkin()->setRelevantUser( $userObj );
 
 		$target = $userObj->getName();
 		$out->addSubtitle( $this->getSubTitle( $userObj ) );
@@ -391,6 +398,13 @@ class DeletedContributionsPage extends SpecialPage {
 					)
 				);
 			}
+
+			# Uploads
+			$tools[] = Linker::linkKnown(
+				SpecialPage::getTitleFor( 'Listfiles', $userObj->getName() ),
+				$this->msg( 'sp-contributions-uploads' )->escaped()
+			);
+
 			# Other logs link
 			$tools[] = Linker::linkKnown(
 				SpecialPage::getTitleFor( 'Log' ),
@@ -405,7 +419,9 @@ class DeletedContributionsPage extends SpecialPage {
 			);
 
 			# Add a link to change user rights for privileged users
-			if( $id !== null && UserrightsPage::userCanChangeRights( User::newFromId( $id ), false ) ) {
+			$userrightsPage = new UserrightsPage();
+			$userrightsPage->setContext( $this->getContext() );
+			if ( $userrightsPage->userCanChangeRights( $userObj ) ) {
 				$tools[] = Linker::linkKnown(
 					SpecialPage::getTitleFor( 'Userrights', $nt->getDBkey() ),
 					$this->msg( 'sp-contributions-userrights' )->escaped()
@@ -493,8 +509,17 @@ class DeletedContributionsPage extends SpecialPage {
 				'size' => '20',
 				'required' => ''
 			) + ( $options['target'] ? array() : array( 'autofocus' ) ) ) . ' '.
-			Xml::label( $this->msg( 'namespace' )->text(), 'namespace' ) . ' ' .
-			Xml::namespaceSelector( $options['namespace'], '' ) . ' ' .
+			Html::namespaceSelector(
+				array(
+					'selected' => $options['namespace'],
+					'all' => '',
+					'label' => $this->msg( 'namespace' )->text()
+				), array(
+					'name'  => 'namespace',
+					'id'    => 'namespace',
+					'class' => 'namespaceselector',
+				)
+			) . ' ' .
 			Xml::submitButton( $this->msg( 'sp-contributions-submit' )->text() ) .
 			Xml::closeElement( 'fieldset' ) .
 			Xml::closeElement( 'form' );

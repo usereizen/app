@@ -1,5 +1,22 @@
 <?php
 /**
+ * Localisation messages cache.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * http://www.gnu.org/copyleft/gpl.html
+ *
  * @file
  * @ingroup Cache
  */
@@ -115,10 +132,7 @@ class MessageCache {
 	function getParserOptions() {
 		if ( !$this->mParserOptions ) {
 			$this->mParserOptions = new ParserOptions;
-			// Wikia change - begin - @author: TK-999
-			// Backporting upstream fix https://git.wikimedia.org/commit/mediawiki%2Fcore.git/ac97386173bde921e4c53c343bc7b40fcfb4d2b9
 			$this->mParserOptions->setEditSection( false );
-			// Wikia change - end
 		}
 		return $this->mParserOptions;
 	}
@@ -500,7 +514,7 @@ class MessageCache {
 		if ( $code === 'en'  ) {
 			// Delete all sidebars, like for example on action=purge on the
 			// sidebar messages
-			$codes = array_keys( Language::getLanguageNames() );
+			$codes = array_keys( Language::fetchLanguageNames() );
 		}
 
 		global $wgMemc;
@@ -768,7 +782,9 @@ class MessageCache {
 		}
 
 		# Try loading it from the database
-		$revision = Revision::newFromTitle( Title::makeTitle( NS_MEDIAWIKI, $title ) );
+		$revision = Revision::newFromTitle(
+			Title::makeTitle( NS_MEDIAWIKI, $title ), false, Revision::READ_LATEST
+		);
 		if ( $revision ) {
 			$message = $revision->getText();
 			if ($message === false) {
@@ -970,7 +986,7 @@ class MessageCache {
 	 * Clear all stored messages. Mainly used after a mass rebuild.
 	 */
 	function clear() {
-		$langs = Language::getLanguageNames( false );
+		$langs = Language::fetchLanguageNames( null, 'mw' );
 		foreach ( array_keys($langs) as $code ) {
 			# Global cache
 			$this->mMemc->delete( wfMemcKey( 'messages', $code ) );
@@ -992,8 +1008,7 @@ class MessageCache {
 		}
 
 		$lang = array_pop( $pieces );
-		$validCodes = Language::getLanguageNames();
-		if( !array_key_exists( $lang, $validCodes ) ) {
+		if( !Language::fetchLanguageName( $lang, null, 'mw' ) ) {
 			return array( $key, $wgLanguageCode );
 		}
 

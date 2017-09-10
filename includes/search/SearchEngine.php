@@ -2,6 +2,21 @@
 /**
  * Basic search engine
  *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * http://www.gnu.org/copyleft/gpl.html
+ *
  * @file
  * @ingroup Search
  */
@@ -297,7 +312,7 @@ class SearchEngine {
 			return $parsed;
 		}
 
-		$allkeyword = wfMsgForContent( 'searchall' ) . ":";
+		$allkeyword = wfMessage( 'searchall' )->inContentLanguage()->text() . ":";
 		if ( strncmp( $query, $allkeyword, strlen( $allkeyword ) ) == 0 ) {
 			$this->namespaces = null;
 			$parsed = substr( $query, strlen( $allkeyword ) );
@@ -398,7 +413,7 @@ class SearchEngine {
 		$formatted = array_map( array( $wgContLang, 'getFormattedNsText' ), $namespaces );
 		foreach ( $formatted as $key => $ns ) {
 			if ( empty( $ns ) )
-				$formatted[$key] = wfMsg( 'blanknamespace' );
+				$formatted[$key] = wfMessage( 'blanknamespace' )->text();
 		}
 		return $formatted;
 	}
@@ -485,19 +500,6 @@ class SearchEngine {
 			}
 			return $wgCanonicalServer . wfScript( 'api' ) . '?action=opensearch&search={searchTerms}&namespace=' . $ns;
 		}
-	}
-
-	/**
-	 * Get internal MediaWiki Suggest template
-	 *
-	 * @return String
-	 */
-	public static function getMWSuggestTemplate() {
-		global $wgMWSuggestTemplate, $wgServer;
-		if ( $wgMWSuggestTemplate )
-			return $wgMWSuggestTemplate;
-		else
-			return $wgServer . wfScript( 'api' ) . '?action=opensearch&search={searchTerms}&namespace={namespaces}&suggest';
 	}
 }
 
@@ -737,8 +739,11 @@ class SearchResult {
 	protected function initFromTitle( $title ) {
 		$this->mTitle = $title;
 		if ( !is_null( $this->mTitle ) ) {
+			$id = false;
+			Hooks::run( 'SearchResultInitFromTitle', [ $title, &$id ] );
 			$this->mRevision = Revision::newFromTitle(
-				$this->mTitle, false, Revision::READ_NORMAL );
+				$this->mTitle, $id, Revision::READ_NORMAL );
+
 			if ( $this->mTitle->getNamespace() === NS_FILE )
 				$this->mImage = wfFindFile( $this->mTitle );
 		}

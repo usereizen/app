@@ -46,8 +46,7 @@ class SpecialUserlogout extends UnlistedSpecialPage {
 		     strpos( $_SERVER['REQUEST_URI'], '&amp;' ) !== false
 		) {
 			wfDebug( "Special:Userlogout request {$_SERVER['REQUEST_URI']} looks suspicious, denying.\n" );
-			throw new HttpError( 400, wfMessage( 'suspicious-userlogout' ),
-				wfMessage( 'loginerror' ) );
+			throw new HttpError( 400, $this->msg( 'suspicious-userlogout' ), $this->msg( 'loginerror' ) );
 		}
 
 		$this->logger->info( 'IRIS-4228 Logout has been called' );

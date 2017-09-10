@@ -1,14 +1,32 @@
 <?php
+/**
+ * Object caching using memcached.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * @file
+ * @ingroup Cache
+ */
 
 /**
  * A wrapper class for the pure-PHP memcached client, exposing a BagOStuff interface.
+ *
+ * @ingroup Cache
  */
-class MemcachedPhpBagOStuff extends BagOStuff {
-
-	/**
-	 * @var MemCachedClientforWiki
-	 */
-	protected $client;
+class MemcachedPhpBagOStuff extends MemcachedBagOStuff {
 
 	/**
 	 * Constructor.
@@ -24,32 +42,11 @@ class MemcachedPhpBagOStuff extends BagOStuff {
 	 * @param $params array
 	 */
 	function __construct( $params ) {
-		global $wgMemCachedClass;
+		$params = $this->applyDefaultParams( $params );
 
-		if ( !isset( $params['servers'] ) ) {
-			$params['servers'] = $GLOBALS['wgMemCachedServers'];
-		}
-		if ( !isset( $params['debug'] ) ) {
-			$params['debug'] = $GLOBALS['wgMemCachedDebug'];
-		}
-		if ( !isset( $params['persistent'] ) ) {
-			$params['persistent'] = $GLOBALS['wgMemCachedPersistent'];
-		}
-		if  ( !isset( $params['compress_threshold'] ) ) {
-			$params['compress_threshold'] = 1500;
-		}
-		if ( !isset( $params['timeout'] ) ) {
-			$params['timeout'] = $GLOBALS['wgMemCachedTimeout'];
-		}
-		if ( !isset( $params['connect_timeout'] ) ) {
-			$params['connect_timeout'] = $GLOBALS['wgMemCachedConnectionTimeout'] ?: 0.5; # Wikia change (global introduced)
-		}
-
-		if (empty($wgMemCachedClass) || !class_exists($wgMemCachedClass)) {
-			$wgMemCachedClass = 'MemCachedClientforWiki';
-		}
-
-		$this->client = new $wgMemCachedClass( $params );
+		$this->client = new MemCachedClientforWiki( $params );
+		$this->client->set_servers( $params['servers'] );
+		$this->client->set_debug( $params['debug'] );
 	}
 
 	/**
@@ -68,28 +65,18 @@ class MemcachedPhpBagOStuff extends BagOStuff {
 	}
 
 	/**
-	 * @param $key string
-	 * @param $value
-	 * @param $exptime int If it's equal to zero, the item will never expire!
-	 * @return bool
+	 * @param $keys Array
+	 * @return Array
 	 */
-	public function set( $key, $value, $exptime = 0 ) {
-		return $this->client->set( $this->encodeKey( $key ), $value, $exptime );
-	}
-
-	/**
-	 * @param $key string
-	 * @param $time int
-	 * @return bool
-	 */
-	public function delete( $key, $time = 0 ) {
-		return $this->client->delete( $this->encodeKey( $key ), $time );
+	public function getMulti( array $keys ) {
+		$callback = array( $this, 'encodeKey' );
+		return $this->client->get_multi( array_map( $callback, $keys ) );
 	}
 
 	/**
 	 * @param $key
 	 * @param $timeout int
-	 * @return
+	 * @return bool
 	 */
 	public function lock( $key, $timeout = 0 ) {
 		return $this->client->lock( $this->encodeKey( $key ), $timeout );
@@ -102,26 +89,7 @@ class MemcachedPhpBagOStuff extends BagOStuff {
 	public function unlock( $key ) {
 		return $this->client->unlock( $this->encodeKey( $key ) );
 	}
-
-	/**
-	 * @param $key string
-	 * @param $value int
-	 * @return Mixed
-	 */
-	public function add( $key, $value, $exptime = 0 ) {
-		return $this->client->add( $this->encodeKey( $key ), $value, $exptime );
-	}
-
-	/**
-	 * @param $key string
-	 * @param $value int
-	 * @param $exptime
-	 * @return Mixed
-	 */
-	public function replace( $key, $value, $exptime = 0 ) {
-		return $this->client->replace( $this->encodeKey( $key ), $value, $exptime );
-	}
-
+	
 	/**
 	 * @param $key string
 	 * @param $value int
@@ -180,61 +148,13 @@ class MemcachedPhpBagOStuff extends BagOStuff {
 	}
 
 	/**
-	 * Do a get_multi request and optionally return the data if required
-	 *
-	 * @author Władysław Bodzek <wladek@wikia-inc.com>
-	 * @param $keys array List of keys
-	 * @parma $returnData bool Return the data?
-	 * @return array
-	 */
-	protected function getMultiInternal( $keys, $returnData ) {
-		$map = array();
-		foreach ($keys as $key) {
-			$map[$this->encodeKey($key)] = $key;
-		}
-		$mappedData = $this->client->get_multi( array_keys( $map ) );
-
-		if ( !$returnData ) {
-			return true;
-		}
-
-		$data = array();
-		foreach ($mappedData as $k => $v) {
-			$data[$map[$k]] = $v;
-		}
-
-		return $data;
-	}
-
-	/**
-	 * Get multiple items at once
-	 *
-	 * @author Władysław Bodzek <wladek@wikia-inc.com>
-	 * @param $keys array List of keys
-	 * @return array Data associated with given keys, no data is indicated by "false"
-	 */
-	public function getMulti( $keys ) {
-		global $wgEnableMemcachedBulkMode;
-		if ( empty( $wgEnableMemcachedBulkMode ) ) {
-			return parent::getMulti($keys);
-		}
-
-		return $this->getMultiInternal($keys,true);
-	}
-
-	/**
 	 * Prefetch the following keys if local cache is enabled, otherwise don't do anything
 	 *
 	 * @author Władysław Bodzek <wladek@wikia-inc.com>
 	 * @param $keys array List of keys to prefetch
 	 */
 	public function prefetch( $keys ) {
-		global $wgEnableMemcachedBulkMode;
-		if ( empty( $wgEnableMemcachedBulkMode ) ) {
-			parent::prefetch($keys);
-		}
-
-		$this->getMultiInternal($keys,false);
+		$this->getMulti( $keys );
 	}
 
 	/**
@@ -246,6 +166,5 @@ class MemcachedPhpBagOStuff extends BagOStuff {
 	public function clearLocalCache( $key ) {
 		unset($this->client->_dupe_cache[$key]);
 	}
-
 }
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * See docs/deferred.txt
+ * Updater for link tracking tables after a page edit.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,22 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  * http://www.gnu.org/copyleft/gpl.html
  *
+ * @file
+ */
+
+/**
+ * See docs/deferred.txt
+ *
  * @todo document (e.g. one-sentence top-level class description).
  */
 
 use Wikia\Tasks\Tasks\BatchRefreshLinksForTemplate;
 
-class LinksUpdate {
+class LinksUpdate extends SqlDataUpdate {
 
-	/**@{{
-	 * @private
-	 */
-	var $mId,            //!< Page ID of the article linked from
+	// @todo: make members protected, but make sure extensions don't break
+
+	public $mId,         //!< Page ID of the article linked from
 		$mTitle,         //!< Title object of the article linked from
 		$mParserOutput,  //!< Parser output
 		$mLinks,         //!< Map of title strings to IDs for the links in the document
@@ -44,7 +49,6 @@ class LinksUpdate {
 		$mDb,            //!< Database connection reference
 		$mOptions,       //!< SELECT options to be used (array)
 		$mRecursive;     //!< Whether to queue jobs for recursive updates
-	/**@}}*/
 
 	/**
 	 * Constructor
@@ -54,21 +58,24 @@ class LinksUpdate {
 	 * @param $recursive Boolean: queue jobs for recursive updates?
 	 */
 	function __construct( $title, $parserOutput, $recursive = true ) {
-		global $wgAntiLockFlags;
+		parent::__construct( false ); // no implicit transaction
 
-		if ( $wgAntiLockFlags & ALF_NO_LINK_LOCK ) {
-			$this->mOptions = array();
-		} else {
-			$this->mOptions = array( 'FOR UPDATE' );
-		}
-		$this->mDb = wfGetDB( DB_MASTER );
-
-		if ( !is_object( $title ) ) {
+		if ( !( $title instanceof Title ) ) {
 			throw new MWException( "The calling convention to LinksUpdate::LinksUpdate() has changed. " .
 				"Please see Article::editUpdates() for an invocation example.\n" );
 		}
+
+		if ( !( $parserOutput instanceof ParserOutput ) ) {
+			throw new MWException( "The calling convention to LinksUpdate::__construct() has changed. " .
+				"Please see WikiPage::doEditUpdates() for an invocation example.\n" );
+		}
+
 		$this->mTitle = $title;
 		$this->mId = $title->getArticleID();
+
+		if ( !$this->mId ) {
+			throw new MWException( "The Title object did not provide an article ID. Perhaps the page doesn't exist?" );
+		}
 
 		$this->mParserOutput = $parserOutput;
 		$this->mLinks = $parserOutput->getLinks();
@@ -346,8 +353,10 @@ class LinksUpdate {
 	 *
 	 * Wikia change CE-677 - part of functionality moved to queuePagesInvalidation method
 	 * @author Kamil Koterba kamil@wikia-inc.com
+	 * @param int $namespace
+	 * @param array $dbkeys
 	 */
-	function invalidatePages() {
+	function invalidatePages( $namespace, array $dbkeys ) {
 
 		if ( !count( $this->mInvalidationQueue ) ) {
 			return;
@@ -372,7 +381,7 @@ class LinksUpdate {
 	 * method changed by Wikia CE-677
 	 * @author Kamil Koterba kamil@wikia-inc.com
 	 * 
-	 * @param Array $cats array of strings - categories names
+	 * @param string[] $cats array of strings - categories names
 	 */
 	function queueCategoriesInvalidation( $cats ) {
 		$this->queuePagesInvalidation( NS_CATEGORY, array_keys( $cats ) );
@@ -396,7 +405,7 @@ class LinksUpdate {
 	 * method changed by Wikia CE-677
 	 * @author Kamil Koterba kamil@wikia-inc.com
 	 * 
-	 * @param Array $images array of strings - files names
+	 * @param string[] $images array of strings - files names
 	 */
 	function queueImageDescriptionsInvalidation( $images ) {
 		$this->queuePagesInvalidation( NS_FILE, array_keys( $images ) );
@@ -928,6 +937,91 @@ class LinksUpdate {
 				$task->queue();
 				// Wikia change end
 			}
+		}
+	}
+}
+
+/**
+ * Update object handling the cleanup of links tables after a page was deleted.
+ **/
+class LinksDeletionUpdate extends SqlDataUpdate {
+
+	protected $mPage;     //!< WikiPage the wikipage that was deleted
+
+	/**
+	 * Constructor
+	 *
+	 * @param $page WikiPage Page we are updating
+	 */
+	function __construct( WikiPage $page ) {
+		parent::__construct( false ); // no implicit transaction
+
+		$this->mPage = $page;
+	}
+
+	/**
+	 * Do some database updates after deletion
+	 */
+	public function doUpdate() {
+		$title = $this->mPage->getTitle();
+		$id = $this->mPage->getId();
+
+		# Delete restrictions for it
+		$this->mDb->delete( 'page_restrictions', array ( 'pr_page' => $id ), __METHOD__ );
+
+		# Fix category table counts
+		$cats = array();
+		$res = $this->mDb->select( 'categorylinks', 'cl_to', array( 'cl_from' => $id ), __METHOD__ );
+
+		foreach ( $res as $row ) {
+			$cats [] = $row->cl_to;
+		}
+
+		$this->mPage->updateCategoryCounts( array(), $cats );
+
+		# If using cascading deletes, we can skip some explicit deletes
+		if ( !$this->mDb->cascadingDeletes() ) {
+			$this->mDb->delete( 'revision', array( 'rev_page' => $id ), __METHOD__ );
+
+			# Delete outgoing links
+			$this->mDb->delete( 'pagelinks', array( 'pl_from' => $id ), __METHOD__ );
+			$this->mDb->delete( 'imagelinks', array( 'il_from' => $id ), __METHOD__ );
+			$this->mDb->delete( 'categorylinks', array( 'cl_from' => $id ), __METHOD__ );
+			$this->mDb->delete( 'templatelinks', array( 'tl_from' => $id ), __METHOD__ );
+			$this->mDb->delete( 'externallinks', array( 'el_from' => $id ), __METHOD__ );
+			$this->mDb->delete( 'langlinks', array( 'll_from' => $id ), __METHOD__ );
+			$this->mDb->delete( 'iwlinks', array( 'iwl_from' => $id ), __METHOD__ );
+			$this->mDb->delete( 'redirect', array( 'rd_from' => $id ), __METHOD__ );
+			$this->mDb->delete( 'page_props', array( 'pp_page' => $id ), __METHOD__ );
+		}
+
+		if ( $title->inNamespace( NS_CATEGORY ) ) {
+			$field = $this->mDb->selectField( 'category', 'cat_title',
+				[
+					'cat_title' => $this->mTitle->getDBkey(),
+					'cat_pages <= 0'
+				],
+				__METHOD__
+			);
+
+			if ( $field ) {
+				$task = new \Wikia\Tasks\Tasks\RefreshCategoryCountsTask();
+				$task->call( 'refreshCounts', $field );
+				$task->queue();
+			}
+		}
+
+		# If using cleanup triggers, we can skip some manual deletes
+		if ( !$this->mDb->cleanupTriggers() ) {
+			# Clean up recentchanges entries...
+			$this->mDb->delete( 'recentchanges',
+				array( 'rc_type != ' . RC_LOG,
+					'rc_namespace' => $title->getNamespace(),
+					'rc_title' => $title->getDBkey() ),
+				__METHOD__ );
+			$this->mDb->delete( 'recentchanges',
+				array( 'rc_type != ' . RC_LOG, 'rc_cur_id' => $id ),
+				__METHOD__ );
 		}
 	}
 }

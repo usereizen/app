@@ -219,7 +219,7 @@ class SEOTweaksHooksHelper {
 	 * @param  array $options
 	 * @return bool
 	 */
-	static public function onBeforeParserMakeImageLinkObjOptions( $parser, $title, &$parts, &$params, &$time, &$descQuery, $options ) {
+	static public function onBeforeParserMakeImageLinkObjOptions( $parser, $title, &$parts, &$params, &$descQuery, $options ) {
 		if ( !isset( $params['frame']['alt'] ) && $title->inNamespace( NS_FILE ) ) {
 			$fileName = $title->getText();
 			$finalDotPosition = strrpos( $fileName, '.' );

@@ -14,3 +14,6 @@
 /MediaWiki
 /memcached-client
 /UtfNormal
+*
+!README
+!.gitignore

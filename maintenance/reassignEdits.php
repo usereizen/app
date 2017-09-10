@@ -17,13 +17,20 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  * http://www.gnu.org/copyleft/gpl.html
  *
+ * @file
  * @ingroup Maintenance
  * @author Rob Church <robchur@gmail.com>
  * @licence GNU General Public Licence 2.0 or later
  */
 
-require_once( dirname( __FILE__ ) . '/Maintenance.php' );
+require_once( __DIR__ . '/Maintenance.php' );
 
+/**
+ * Maintenance script that reassigns edits from a user or IP address
+ * to another user.
+ *
+ * @ingroup Maintenance
+ */
 class ReassignEdits extends Maintenance {
 	public function __construct() {
 		parent::__construct();
@@ -68,7 +75,7 @@ class ReassignEdits extends Maintenance {
 	 */
 	private function doReassignEdits( &$from, &$to, $rc = false, $report = false ) {
 		$dbw = wfGetDB( DB_MASTER );
-		$dbw->begin();
+		$dbw->begin( __METHOD__ );
 
 		# Count things
 		$this->output( "Checking current edits..." );
@@ -117,7 +124,7 @@ class ReassignEdits extends Maintenance {
 			}
 		}
 
-		$dbw->commit();
+		$dbw->commit( __METHOD__ );
 		return (int)$total;
 	}
 

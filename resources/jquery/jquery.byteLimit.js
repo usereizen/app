@@ -53,14 +53,14 @@
 		while (
 			startMatches < matchesLen &&
 			oldVal.charAt( startMatches ) === newVal.charAt( startMatches )
-		) {
+			) {
 			startMatches += 1;
 		}
 
 		while (
 			endMatches < ( matchesLen - startMatches ) &&
 			oldVal.charAt( oldVal.length - 1 - endMatches ) === newVal.charAt( newVal.length - 1 - endMatches )
-		) {
+			) {
 			endMatches += 1;
 		}
 
@@ -127,8 +127,8 @@
 		if ( $.isFunction( limit ) ) {
 			fn = limit;
 			limit = undefined;
-		// Either way, verify it is a function so we don't have to call
-		// isFunction again after this.
+			// Either way, verify it is a function so we don't have to call
+			// isFunction again after this.
 		} else if ( !fn || !$.isFunction( fn ) ) {
 			fn = undefined;
 		}

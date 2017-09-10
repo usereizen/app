@@ -1,9 +1,8 @@
 <?php
-/** Bihari (language group)
+/** Bihari (भोजपुरी)
  *
  * @ingroup Language
  * @file
- * @comment falls back to Bhojpuri.
  *
  */
 

@@ -9,9 +9,12 @@
  *
  * @author Abi Azkia
  * @author Andri.h
+ * @author Ayie7791
  * @author Ezagren
  * @author Fadli Idris
  * @author Meno25
+ * @author Rachmat.Wahidi
+ * @author Sayed Muddasir
  * @author Si Gam Acèh
  */
 
@@ -152,4 +155,3 @@ $specialPageAliases = array(
 	'Whatlinkshere'             => array( 'Hubong_gisa' ),
 	'Withoutinterwiki'          => array( 'Hana_interwiki' ),
 );
-

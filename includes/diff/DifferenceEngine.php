@@ -1,6 +1,21 @@
 <?php
 /**
- * User interface for the difference engine
+ * User interface for the difference engine.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * http://www.gnu.org/copyleft/gpl.html
  *
  * @file
  * @ingroup DifferenceEngine
@@ -164,13 +179,22 @@ class DifferenceEngine extends ContextSource {
 		}
 	}
 
-	/**
-	 * Add an HTML of a page with a diff between revisions. It has the following switches that
-	 * allow you to controll the output:
-	 * * $diffOnly - `True` hides the actual content after the latest revision.
-	 * @param bool|false $diffOnly
-	 * @throws PermissionsError
-	 */
+	private function showMissingRevision() {
+		$out = $this->getOutput();
+
+		$missing = array();
+		if ( $this->mOldRev === null ) {
+			$missing[] = $this->deletedIdMarker( $this->mOldid );
+		}
+		if ( $this->mNewRev === null ) {
+			$missing[] = $this->deletedIdMarker( $this->mNewid );
+		}
+
+		$out->setPageTitle( $this->msg( 'errorpagetitle' ) );
+		$out->addWikiMsg( 'difference-missing-revision',
+			$this->getLanguage()->listToText( $missing ), count( $missing ) );
+	}
+
 	function showDiffPage( $diffOnly = false ) {
 		wfProfileIn( __METHOD__ );
 
@@ -180,13 +204,7 @@ class DifferenceEngine extends ContextSource {
 		$out->setRobotPolicy( 'noindex,nofollow' );
 
 		if ( !$this->loadRevisionData() ) {
-			// Sounds like a deleted revision... Let's see what we can do.
-			$t = $this->getTitle()->getPrefixedText();
-			$d = $this->msg( 'missingarticle-diff',
-				$this->deletedIdMarker( $this->mOldid ),
-				$this->deletedIdMarker( $this->mNewid ) )->escaped();
-			$out->setPageTitle( $this->msg( 'errorpagetitle' ) );
-			$out->addWikiMsg( 'missing-article', "<nowiki>$t</nowiki>", "<span class='plainlinks'>$d</span>" );
+			$this->showMissingRevision();
 			wfProfileOut( __METHOD__ );
 			return;
 		}
@@ -246,27 +264,26 @@ class DifferenceEngine extends ContextSource {
 		# a diff between a version V and its previous version V' AND the version V
 		# is the first version of that article. In that case, V' does not exist.
 		if ( $this->mOldRev === false ) {
-			$out->setPageTitle( $this->mNewPage->getPrefixedText() );
-			$out->addSubtitle( $this->msg( 'difference' ) );
+			$out->setPageTitle( $this->msg( 'difference-title', $this->mNewPage->getPrefixedText() ) );
 			$samePage = true;
 			$oldHeader = '';
 		} else {
 			Hooks::run( 'DiffViewHeader', array( $this, $this->mOldRev, $this->mNewRev ) );
 
 			if ( $this->mNewPage->equals( $this->mOldPage ) ) {
-				$out->setPageTitle( $this->mNewPage->getPrefixedText() );
-				$out->addSubtitle( $this->msg( 'difference' ) );
+				$out->setPageTitle( $this->msg( 'difference-title', $this->mNewPage->getPrefixedText() ) );
 				$samePage = true;
 			} else {
-				$out->setPageTitle( $this->mOldPage->getPrefixedText() . ', ' . $this->mNewPage->getPrefixedText() );
+				$out->setPageTitle( $this->msg( 'difference-title-multipage', $this->mOldPage->getPrefixedText(),
+					$this->mNewPage->getPrefixedText() ) );
 				$out->addSubtitle( $this->msg( 'difference-multipage' ) );
 				$samePage = false;
 			}
 
-			if ( $samePage && $this->mNewPage->userCan( 'edit', $user ) ) {
+			if ( $samePage && $this->mNewPage->quickUserCan( 'edit', $user ) ) {
 				if ( $this->mNewRev->isCurrent() && $this->mNewPage->userCan( 'rollback', $user ) ) {
 					$out->preventClickjacking();
-					$rollback = '&#160;&#160;&#160;' . Linker::generateRollback( $this->mNewRev );
+					$rollback = '&#160;&#160;&#160;' . Linker::generateRollback( $this->mNewRev, $this->getContext() );
 				}
 				if ( !$this->mOldRev->isDeleted( Revision::DELETED_TEXT ) && !$this->mNewRev->isDeleted( Revision::DELETED_TEXT ) ) {
 					$undoLink = '<span class="mw-rev-head-action">' . $this->msg( 'parentheses' )->rawParams(
@@ -425,7 +442,7 @@ class DifferenceEngine extends ContextSource {
 
 		if ( $this->mMarkPatrolledLink === null ) {
 			// Prepare a change patrol link, if applicable
-			if ( $wgUseRCPatrol && $this->mNewPage->userCan( 'patrol', $this->getUser() ) ) {
+			if ( $wgUseRCPatrol && $this->mNewPage->quickUserCan( 'patrol', $this->getUser() ) ) {
 				// If we've been given an explicit change identifier, use it; saves time
 				if ( $this->mRcidMarkPatrolled ) {
 					$rcid = $this->mRcidMarkPatrolled;
@@ -543,9 +560,7 @@ class DifferenceEngine extends ContextSource {
 					$wikiPage = WikiPage::factory( $this->mNewPage );
 				}
 
-				$parserOptions = ParserOptions::newFromContext( $this->getContext() );
-				$parserOptions->enableLimitReport();
-				$parserOptions->setTidy( true );
+				$parserOptions = $wikiPage->makeParserOptions( $this->getContext() );
 
 				if ( !$this->mNewRev->isCurrent() ) {
 					$parserOptions->setEditSection( false );
@@ -580,7 +595,7 @@ class DifferenceEngine extends ContextSource {
 	function showDiff( $otitle, $ntitle, $notice = '' ) {
 		$diff = $this->getDiff( $otitle, $ntitle, $notice );
 		if ( $diff === false ) {
-			$this->getOutput()->addWikiMsg( 'missing-article', "<nowiki>(fixme, bug)</nowiki>", '' );
+			$this->showMissingRevision();
 			return false;
 		} else {
 			$this->showDiffStyle();
@@ -749,9 +764,9 @@ class DifferenceEngine extends ContextSource {
 			# Wikia change - end
 
 			# Diff via the shell
-			global $wgTmpDirectory;
-			$tempName1 = tempnam( $wgTmpDirectory, 'diff_' );
-			$tempName2 = tempnam( $wgTmpDirectory, 'diff_' );
+			$tmpDir = wfTempDir();
+			$tempName1 = tempnam( $tmpDir, 'diff_' );
+			$tempName2 = tempnam( $tmpDir, 'diff_' );
 
 			$tempFile1 = fopen( $tempName1, "w" );
 			if ( !$tempFile1 ) {
@@ -924,13 +939,11 @@ class DifferenceEngine extends ContextSource {
 				$editQuery['oldid'] = $rev->getID();
 			}
 
-			$msg = $this->msg( $title->userCan( 'edit', $user ) ? 'editold' : 'viewsourceold' )->escaped();
-			/* Wikia Change begin
-			   Possible values: edit-revision-before, edit-revision-after */
-			$header .= ' <span class="mw-rev-head-action">(' .
-				Linker::linkKnown( $title, $msg, [ 'data-action' => 'edit-revision-' . $type ], $editQuery ) .
-				')</span>';
-			/* Wikia Change end */
+			// Wikia change: add data-action attribute
+			$msg = $this->msg( $title->quickUserCan( 'edit', $user ) ? 'editold' : 'viewsourceold' )->escaped();
+			$header .= ' ' . $this->msg( 'parentheses' )->rawParams(
+				Linker::linkKnown( $title, $msg, [ 'data-action' => 'edit-revision-' . $type ], $editQuery ) )->plain();
+
 			if ( $rev->isDeleted( Revision::DELETED_TEXT ) ) {
 				$header = Html::rawElement( 'span', array( 'class' => 'history-deleted' ), $header );
 			}
@@ -954,7 +967,7 @@ class DifferenceEngine extends ContextSource {
 
 		if ( !$diff && !$otitle ) {
 			$header .= "
-			<tr valign='top'>
+			<tr style='vertical-align: top;'>
 			<td class='diff-ntitle'>{$ntitle}</td>
 			</tr>";
 			$multiColspan = 1;
@@ -972,17 +985,17 @@ class DifferenceEngine extends ContextSource {
 				$multiColspan = 2;
 			}
 			$header .= "
-			<tr class='diff-header' valign='top'>
+			<tr style='vertical-align: top;'>
 			<td colspan='$colspan' class='diff-otitle'>{$otitle}</td>
 			<td colspan='$colspan' class='diff-ntitle'>{$ntitle}</td>
 			</tr>";
 		}
 
 		if ( $multi != '' ) {
-			$header .= "<tr><td colspan='{$multiColspan}' align='center' class='diff-multi'>{$multi}</td></tr>";
+			$header .= "<tr><td colspan='{$multiColspan}' style='text-align: center;' class='diff-multi'>{$multi}</td></tr>";
 		}
 		if ( $notice != '' ) {
-			$header .= "<tr><td colspan='{$multiColspan}' align='center'>{$notice}</td></tr>";
+			$header .= "<tr><td colspan='{$multiColspan}' style='text-align: center;'>{$notice}</td></tr>";
 		}
 
 		return $header . $diff . "</table>";

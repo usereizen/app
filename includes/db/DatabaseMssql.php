@@ -2,6 +2,21 @@
 /**
  * This is the MS SQL Server Native database abstraction layer.
  *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * http://www.gnu.org/copyleft/gpl.html
+ *
  * @file
  * @ingroup Database
  * @author Joel Penner <a-joelpe at microsoft dot com>
@@ -108,13 +123,8 @@ class DatabaseMssql extends DatabaseBase {
 	 * Closes a database connection, if it is open
 	 * Returns success, true if already closed
 	 */
-	function close() {
-		$this->mOpened = false;
-		if ( $this->mConn ) {
-			return sqlsrv_close( $this->mConn );
-		} else {
-			return true;
-		}
+	protected function closeConnection() {
+		return sqlsrv_close( $this->mConn );
 	}
 
 	protected function doQuery( $sql ) {
@@ -600,14 +610,6 @@ class DatabaseMssql extends DatabaseBase {
 		return $sql;
 	}
 
-	// MSSQL does support this, but documentation is too thin to make a generalized
-	// function for this. Apparently UPDATE TOP (N) works, but the sort order
-	// may not be what we're expecting so the top n results may be a random selection.
-	// TODO: Implement properly.
-	function limitResultForUpdate( $sql, $num ) {
-		return $sql;
-	}
-
 	function timestamp( $ts = 0 ) {
 		return wfTimestamp( TS_ISO_8601, $ts );
 	}
@@ -681,7 +683,7 @@ class DatabaseMssql extends DatabaseBase {
 	/**
 	 * Begin a transaction, committing any previously open transaction
 	 */
-	function begin( $fname = 'DatabaseMssql::begin' ) {
+	protected function doBegin( $fname = 'DatabaseMssql::begin' ) {
 		sqlsrv_begin_transaction( $this->mConn );
 		$this->mTrxLevel = 1;
 	}
@@ -689,7 +691,7 @@ class DatabaseMssql extends DatabaseBase {
 	/**
 	 * End a transaction
 	 */
-	function commit( $fname = 'DatabaseMssql::commit' ) {
+	protected function doCommit( $fname = 'DatabaseMssql::commit' ) {
 		sqlsrv_commit( $this->mConn );
 		$this->mTrxLevel = 0;
 	}
@@ -698,7 +700,7 @@ class DatabaseMssql extends DatabaseBase {
 	 * Rollback a transaction.
 	 * No-op on non-transactional databases.
 	 */
-	function rollback( $fname = 'DatabaseMssql::rollback' ) {
+	protected function doRollback( $fname = 'DatabaseMssql::rollback' ) {
 		sqlsrv_rollback( $this->mConn );
 		$this->mTrxLevel = 0;
 	}

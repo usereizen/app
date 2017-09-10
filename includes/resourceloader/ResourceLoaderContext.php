@@ -1,5 +1,7 @@
 <?php
 /**
+ * Context for resource loader modules.
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -39,6 +41,7 @@ class ResourceLoaderContext {
 	protected $only;
 	protected $version;
 	protected $hash;
+	protected $raw;
 
 	// Wikia change - begin
 	protected $sassParams;
@@ -67,6 +70,7 @@ class ResourceLoaderContext {
 		$this->debug     = $request->getFuzzyBool( 'debug', $wgResourceLoaderDebug );
 		$this->only      = $request->getVal( 'only' );
 		$this->version   = $request->getVal( 'version' );
+
 		// Wikia - change begin - @author: wladek
 		$this->sassParams = array();
 		foreach ($request->getValues() as $key => $value) {
@@ -76,6 +80,9 @@ class ResourceLoaderContext {
 		}
 		ksort($this->sassParams);
 		// Wikia - change end
+
+		$this->raw       = $request->getFuzzyBool( 'raw' );
+
 
 		$skinnames = Skin::getSkinNames();
 		// If no skin is specified, or we don't recognize the skin, use the default skin
@@ -171,7 +178,7 @@ class ResourceLoaderContext {
 			$this->direction = $this->request->getVal( 'dir' );
 			if ( !$this->direction ) {
 				# directionality based on user language (see bug 6100)
-				$this->direction = Language::factory( $this->language )->getDir();
+				$this->direction = Language::factory( $this->getLanguage() )->getDir();
 			}
 		}
 		return $this->direction;
@@ -214,6 +221,13 @@ class ResourceLoaderContext {
 
 	public function getSassParams() {
 		return $this->sassParams;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function getRaw() {
+		return $this->raw;
 	}
 
 	/**

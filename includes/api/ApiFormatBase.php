@@ -4,7 +4,7 @@
  *
  * Created on Sep 19, 2006
  *
- * Copyright © 2006 Yuri Astrakhan <Firstname><Lastname>@gmail.com
+ * Copyright © 2006 Yuri Astrakhan "<Firstname><Lastname>@gmail.com"
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -170,8 +170,10 @@ abstract class ApiFormatBase extends ApiBase {
 <br />
 <small>
 You are looking at the HTML representation of the <?php echo( $this->mFormat ); ?> format.<br />
-HTML is good for debugging, but probably is not suitable for your application.<br />
-See <a href='https://www.mediawiki.org/wiki/API'>complete documentation</a>, or
+HTML is good for debugging, but is unsuitable for application use.<br />
+Specify the format parameter to change the output format.<br />
+To see the non HTML representation of the <?php echo( $this->mFormat ); ?> format, set format=<?php echo( strtolower( $this->mFormat ) ); ?>.<br />
+See the <a href='https://www.mediawiki.org/wiki/API'>complete documentation</a>, or
 <a href='<?php echo( $script ); ?>'>API help</a> for more information.
 </small>
 <?php
@@ -350,7 +352,7 @@ class ApiFormatFeedWrapper extends ApiFormatBase {
 	 */
 	public static function setResult( $result, $feed, $feedItems ) {
 		// Store output in the Result data.
-		// This way we can check during execution if any error has occured
+		// This way we can check during execution if any error has occurred
 		// Disable size checking for this because we can't continue
 		// cleanly; size checking would cause more problems than it'd
 		// solve
@@ -395,7 +397,7 @@ class ApiFormatFeedWrapper extends ApiFormatBase {
 			}
 			$feed->outFooter();
 		} else {
-			// Error has occured, print something useful
+			// Error has occurred, print something useful
 			ApiBase::dieDebug( __METHOD__, 'Invalid feed class/item' );
 		}
 	}

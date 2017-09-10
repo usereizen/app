@@ -106,7 +106,7 @@ class ApiQuerySiteinfo extends ApiQueryBase {
 				// Abuse siprop as a query-continue parameter
 				// and set it to all unprocessed props
 				$this->setContinueEnumParameter( 'prop', implode( '|',
-						array_diff( $params['prop'], $done ) ) );
+					array_diff( $params['prop'], $done ) ) );
 				break;
 			}
 			$done[] = $p;
@@ -327,8 +327,8 @@ class ApiQuerySiteinfo extends ApiQueryBase {
 			list( $host, $lag, $index ) = $lb->getMaxLag();
 			$data[] = array(
 				'host' => $wgShowHostnames
-						? $lb->getServerName( $index )
-						: '',
+					? $lb->getServerName( $index )
+					: '',
 				'lag' => intval( $lag )
 			);
 		}
@@ -374,7 +374,7 @@ class ApiQuerySiteinfo extends ApiQueryBase {
 				if ( $group == 'user' ) {
 					$arr['number'] = SiteStats::users();
 
-				// '*' and autopromote groups have no size
+					// '*' and autopromote groups have no size
 				} elseif ( $group !== '*' && !isset( $wgAutopromote[$group] ) ) {
 					$arr['number'] = SiteStats::numberInGroup( $group );
 				}
@@ -439,12 +439,12 @@ class ApiQuerySiteinfo extends ApiQueryBase {
 					$ret['url'] = $ext['url'];
 				}
 				if ( isset( $ext['version'] ) ) {
-						$ret['version'] = $ext['version'];
+					$ret['version'] = $ext['version'];
 				} elseif ( isset( $ext['svn-revision'] ) &&
-					preg_match( '/\$(?:Rev|LastChangedRevision|Revision): *(\d+)/',
-						$ext['svn-revision'], $m ) )
+						   preg_match( '/\$(?:Rev|LastChangedRevision|Revision): *(\d+)/',
+							   $ext['svn-revision'], $m ) )
 				{
-						$ret['version'] = 'r' . $m[1];
+					$ret['version'] = 'r' . $m[1];
 				}
 				$data[] = $ret;
 			}

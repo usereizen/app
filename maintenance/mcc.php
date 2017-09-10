@@ -25,17 +25,9 @@
 /** */
 require_once( __DIR__ . '/commandLine.inc' );
 
-$debug = in_array( '--debug', $argv );
-$help = in_array( '--help', $argv );
-
-if( $help ) {
-	mccShowUsage();
-	exit( 0 );
-}
-$mcc = new MWMemcached( array(
-	'persistent' => true,
-	'debug' => $debug,
-) );
+$mcc = new MWMemcached( array( 'persistent' => true/*, 'debug' => true*/ ) );
+$mcc->set_servers( $wgMemCachedServers );
+# $mcc->set_debug( true );
 
 $mcc->set_servers( $wgMemCachedServers );
 

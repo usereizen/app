@@ -1,5 +1,7 @@
 <?php
 /**
+ * Resource loader module for user preference customizations.
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -56,7 +58,8 @@ class ResourceLoaderUserOptionsModule extends ResourceLoaderModule {
 
 		/* Wikia change begin - @author: macbre */
 		$options = $wgUser->getOptions();
-		Hooks::run('ResourceLoaderUserOptionsModuleGetOptions', array($context, &$options));
+		Hooks::run( 'ResourceLoaderUserOptionsModuleGetOptions', [ $context, &$options ] );
+
 		/* Wikia change end */
 
 		return Xml::encodeJsCall( 'mw.user.options.set',

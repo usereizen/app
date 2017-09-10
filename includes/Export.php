@@ -264,7 +264,9 @@ class WikiExporter {
 			if ( $this->buffer == WikiExporter::STREAM ) {
 				$prev = $this->db->bufferResults( false );
 			}
+
 			$result = null; // Assuring $result is not undefined, if exception occurs early
+
 			try {
 				$result = $this->db->select( array( 'logging', 'user' ),
 					array( "{$logging}.*", 'user_name' ), // grab the user name
@@ -272,7 +274,9 @@ class WikiExporter {
 					__METHOD__,
 					array( 'ORDER BY' => 'log_id', 'USE INDEX' => array( 'logging' => 'PRIMARY' ) )
 				);
+
 				$this->outputLogStream( $result );
+
 				if ( $this->buffer == WikiExporter::STREAM ) {
 					$this->db->bufferResults( $prev );
 				}
@@ -698,6 +702,7 @@ class XmlDumpWriter {
 
 		$out = "    <revision>\n";
 		$out .= "      " . Xml::element( 'id', null, strval( $row->rev_id ) ) . "\n";
+
 		if ( isset( $row->rev_parent_id ) && $row->rev_parent_id ) {
 			$out .= "      " . Xml::element( 'parentid', null, strval( $row->rev_parent_id ) ) . "\n";
 		}
@@ -1145,7 +1150,11 @@ class DumpPipeOutput extends DumpFileOutput {
 	}
 
 	/**
+<<<<<<< HEAD
 	 * @param string $newname
+=======
+	 * @param mixed $newname
+>>>>>>> upstream/REL1_20
 	 */
 	function closeRenameAndReopen( $newname ) {
 		$this->closeAndRename( $newname, true );
@@ -1349,7 +1358,11 @@ class DumpFilter {
 
 	/**
 	 * Override for page-based filter types.
+<<<<<<< HEAD
 	 * @param object $page
+=======
+	 * @param $page
+>>>>>>> upstream/REL1_20
 	 * @return bool
 	 */
 	function pass( $page ) {

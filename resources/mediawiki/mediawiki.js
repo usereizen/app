@@ -1,9 +1,9 @@
 /*
  * Core MediaWiki JavaScript Library
  */
-
+/*global mw:true */
 var mw = ( function ( $, undefined ) {
-"use strict";
+	"use strict";
 
 	/* Private Members */
 
@@ -45,13 +45,15 @@ var mw = ( function ( $, undefined ) {
 			var results, i;
 
 			if ( $.isArray( selection ) ) {
-				selection = $.makeArray( selection );
+				selection = slice.call( selection );
 				results = {};
 				for ( i = 0; i < selection.length; i += 1 ) {
 					results[selection[i]] = this.get( selection[i], fallback );
 				}
 				return results;
-			} else if ( typeof selection === 'string' ) {
+			}
+
+			if ( typeof selection === 'string' ) {
 				if ( this.values[selection] === undefined ) {
 					if ( fallback !== undefined ) {
 						return fallback;
@@ -60,11 +62,13 @@ var mw = ( function ( $, undefined ) {
 				}
 				return this.values[selection];
 			}
+
 			if ( selection === undefined ) {
 				return this.values;
-			} else {
-				return null; // invalid selection key
 			}
+
+			// invalid selection key
+			return null;
 		},
 
 		/**
@@ -82,7 +86,8 @@ var mw = ( function ( $, undefined ) {
 					this.values[s] = selection[s];
 				}
 				return true;
-			} else if ( typeof selection === 'string' && value !== undefined ) {
+			}
+			if ( typeof selection === 'string' && value !== undefined ) {
 				this.values[selection] = value;
 				return true;
 			}
@@ -105,9 +110,8 @@ var mw = ( function ( $, undefined ) {
 					}
 				}
 				return true;
-			} else {
-				return this.values[selection] !== undefined;
 			}
+			return this.values[selection] !== undefined;
 		}
 	};
 
@@ -345,7 +349,7 @@ var mw = ( function ( $, undefined ) {
 		 * Dummy function which in debug mode can be replaced with a function that
 		 * emulates console.log in console-less environments.
 		 */
-		log: function() { },
+		log: function () { },
 
 		/**
 		 * @var constructor Make the Map constructor publicly available.
@@ -417,7 +421,7 @@ var mw = ( function ( $, undefined ) {
 		/**
 		 * Client-side module loader which integrates with the MediaWiki ResourceLoader
 		 */
-		loader: ( function() {
+		loader: ( function () {
 
 			/* Private Members */
 
@@ -437,7 +441,7 @@ var mw = ( function ( $, undefined ) {
 			 *	{
 			 *		'moduleName': {
 			 *			'version': ############## (unix timestamp),
-			 *			'dependencies': ['required.foo', 'bar.also', ...], (or) function() {}
+			 *			'dependencies': ['required.foo', 'bar.also', ...], (or) function () {}
 			 *			'group': 'somegroup', (or) null,
 			 *			'source': 'local', 'someforeignwiki', (or) null
 			 *			'state': 'registered', 'loading', 'loaded', 'ready', 'error' or 'missing'
@@ -447,7 +451,7 @@ var mw = ( function ( $, undefined ) {
 			 *		}
 			 *	}
 			 */
-			var	registry = {},
+			var registry = {},
 				/**
 				 * Mapping of sources, keyed by source-id, values are objects.
 				 * Format:
@@ -464,16 +468,8 @@ var mw = ( function ( $, undefined ) {
 				queue = [],
 				// List of callback functions waiting for modules to be ready to be called
 				jobs = [],
-				// Flag indicating that document ready has occured
-				ready = false,
 				// Selector cache for the marker element. Use getMarker() to get/use the marker!
 				$marker = null;
-
-			/* Cache document ready status */
-
-			$(document).ready( function () {
-				ready = true;
-			} );
 
 			/* Private methods */
 
@@ -481,48 +477,99 @@ var mw = ( function ( $, undefined ) {
 				// Cached ?
 				if ( $marker ) {
 					return $marker;
-				} else {
-					$marker = $( 'meta[name="ResourceLoaderDynamicStyles"]' );
-					if ( $marker.length ) {
-						return $marker;
-					}
-					mw.log( 'getMarker> No <meta name="ResourceLoaderDynamicStyles"> found, inserting dynamically.' );
-					$marker = $( '<meta>' ).attr( 'name', 'ResourceLoaderDynamicStyles' ).appendTo( 'head' );
+				}
+
+				$marker = $( 'meta[name="ResourceLoaderDynamicStyles"]' );
+				if ( $marker.length ) {
 					return $marker;
 				}
+				mw.log( 'getMarker> No <meta name="ResourceLoaderDynamicStyles"> found, inserting dynamically.' );
+				$marker = $( '<meta>' ).attr( 'name', 'ResourceLoaderDynamicStyles' ).appendTo( 'head' );
+
+				return $marker;
 			}
 
-			function addInlineCSS( css, media ) {
-				var	$style = getMarker().prev(),
-					$newStyle,
-					attrs = { 'type': 'text/css', 'media': media };
-				if ( $style.is( 'style' ) && $style.data( 'ResourceLoaderDynamicStyleTag' ) === true ) {
-					// There's already a dynamic <style> tag present, append to it
-					// This recycling of <style> tags is for bug 31676 (can't have
-					// more than 32 <style> tags in IE)
+			/**
+			 * Create a new style tag and add it to the DOM.
+			 *
+			 * @param text String: CSS text
+			 * @param nextnode mixed: [optional] An Element or jQuery object for an element where
+			 * the style tag should be inserted before. Otherwise appended to the <head>.
+			 * @return HTMLStyleElement
+			 */
+			function addStyleTag( text, nextnode ) {
+				var s = document.createElement( 'style' );
+				// Insert into document before setting cssText (bug 33305)
+				if ( nextnode ) {
+					// Must be inserted with native insertBefore, not $.fn.before.
+					// When using jQuery to insert it, like $nextnode.before( s ),
+					// then IE6 will throw "Access is denied" when trying to append
+					// to .cssText later. Some kind of weird security measure.
+					// http://stackoverflow.com/q/12586482/319266
+					// Works: jsfiddle.net/zJzMy/1
+					// Fails: jsfiddle.net/uJTQz
+					// Works again: http://jsfiddle.net/Azr4w/ (diff: the next 3 lines)
+					if ( nextnode.jquery ) {
+						nextnode = nextnode.get( 0 );
+					}
+					nextnode.parentNode.insertBefore( s, nextnode );
+				} else {
+					document.getElementsByTagName( 'head' )[0].appendChild( s );
+				}
+				if ( s.styleSheet ) {
+					// IE
+					s.styleSheet.cssText = text;
+				} else {
+					// Other browsers.
+					// (Safari sometimes borks on non-string values,
+					// play safe by casting to a string, just in case.)
+					s.appendChild( document.createTextNode( String( text ) ) );
+				}
+				return s;
+			}
 
-					// Also, calling .append() on a <style> tag explodes with a JS error in IE,
-					// so if the .append() fails we fall back to building a new <style> tag and
-					// replacing the existing one
-					try {
-						// Do cdata sanitization on the provided CSS, and prepend a double newline
-						css = $( mw.html.element( 'style', {}, new mw.html.Cdata( "\n\n" + css ) ) ).html();
-						$style.append( css );
-					} catch ( e ) {
-						// Generate a new tag with the combined CSS
-						css = $style.html() + "\n\n" + css;
-						$newStyle = $( mw.html.element( 'style', attrs, new mw.html.Cdata( css ) ) )
-							.data( 'ResourceLoaderDynamicStyleTag', true );
-						// Prevent a flash of unstyled content by inserting the new tag
-						// before removing the old one
-						$style.after( $newStyle );
-						$style.remove();
+			/**
+			 * Checks if certain cssText is safe to append to
+			 * a stylesheet.
+			 *
+			 * Right now it only makes sure that cssText containing @import
+			 * rules will end up in a new stylesheet (as those only work when
+			 * placed at the start of a stylesheet; bug 35562).
+			 * This could later be extended to take care of other bugs, such as
+			 * the IE cssRules limit - not the same as the IE styleSheets limit).
+			 */
+			function canExpandStylesheetWith( $style, cssText ) {
+				return cssText.indexOf( '@import' ) === -1;
+			}
+
+			function addEmbeddedCSS( cssText ) {
+				var $style, styleEl;
+				$style = getMarker().prev();
+				// Re-use <style> tags if possible, this to try to stay
+				// under the IE stylesheet limit (bug 31676).
+				// Also verify that the the element before Marker actually is one
+				// that came from ResourceLoader, and not a style tag that some
+				// other script inserted before our marker, or, more importantly,
+				// it may not be a style tag at all (could be <meta> or <script>).
+				if (
+					$style.data( 'ResourceLoaderDynamicStyleTag' ) === true &&
+					canExpandStylesheetWith( $style, cssText )
+				) {
+					// There's already a dynamic <style> tag present and
+					// canExpandStylesheetWith() gave a green light to append more to it.
+					styleEl = $style.get( 0 );
+					if ( styleEl.styleSheet ) {
+						try {
+							styleEl.styleSheet.cssText += cssText; // IE
+						} catch ( e ) {
+							log( 'addEmbeddedCSS fail\ne.message: ' + e.message, e );
+						}
+					} else {
+						styleEl.appendChild( document.createTextNode( String( cssText ) ) );
 					}
 				} else {
-					// Create a new <style> tag and insert it
-					$style = $( mw.html.element( 'style', attrs, new mw.html.Cdata( css ) ) );
-					$style.data( 'ResourceLoaderDynamicStyleTag', true );
-					getMarker().before( $style );
+					$( addStyleTag( cssText, getMarker() ) )
+						.data( 'ResourceLoaderDynamicStyleTag', true );
 				}
 			}
 
@@ -560,9 +607,19 @@ var mw = ( function ( $, undefined ) {
 			}
 
 			/**
-			 * Recursively resolves dependencies and detects circular references
+			 * Resolves dependencies and detects circular references.
+			 *
+			 * @param module String Name of the top-level module whose dependencies shall be
+			 *   resolved and sorted.
+			 * @param resolved Array Returns a topological sort of the given module and its
+			 *   dependencies, such that later modules depend on earlier modules. The array
+			 *   contains the module names. If the array contains already some module names,
+			 *   this function appends its result to the pre-existing array.
+			 * @param unresolved Object [optional] Hash used to track the current dependency
+			 *   chain; used to report loops in the dependency graph.
+			 * @throws Error if any unregistered module or a dependency loop is encountered
 			 */
-			function recurse( module, resolved, unresolved ) {
+			function sortDependencies( module, resolved, unresolved ) {
 				var n, deps, len;
 
 				if ( registry[module] === undefined ) {
@@ -576,12 +633,20 @@ var mw = ( function ( $, undefined ) {
 						registry[module].dependencies = [registry[module].dependencies];
 					}
 				}
+				if ( $.inArray( module, resolved ) !== -1 ) {
+					// Module already resolved; nothing to do.
+					return;
+				}
+				// unresolved is optional, supply it if not passed in
+				if ( !unresolved ) {
+					unresolved = {};
+				}
 				// Tracks down dependencies
 				deps = registry[module].dependencies;
 				len = deps.length;
 				for ( n = 0; n < len; n += 1 ) {
 					if ( $.inArray( deps[n], resolved ) === -1 ) {
-						if ( $.inArray( deps[n], unresolved ) !== -1 ) {
+						if ( unresolved[deps[n]] ) {
 							throw new Error(
 								'Circular reference detected: ' + module +
 								' -> ' + deps[n]
@@ -589,40 +654,40 @@ var mw = ( function ( $, undefined ) {
 						}
 
 						// Add to unresolved
-						unresolved[unresolved.length] = module;
-						recurse( deps[n], resolved, unresolved );
-						// module is at the end of unresolved
-						unresolved.pop();
+						unresolved[module] = true;
+						sortDependencies( deps[n], resolved, unresolved );
+						delete unresolved[module];
 					}
 				}
 				resolved[resolved.length] = module;
 			}
 
 			/**
-			 * Gets a list of module names that a module depends on in their proper dependency order
+			 * Gets a list of module names that a module depends on in their proper dependency
+			 * order.
 			 *
 			 * @param module string module name or array of string module names
 			 * @return list of dependencies, including 'module'.
 			 * @throws Error if circular reference is detected
 			 */
 			function resolve( module ) {
-				var modules, m, deps, n, resolved;
+				var m, resolved;
 
 				// Allow calling with an array of module names
 				if ( $.isArray( module ) ) {
-					modules = [];
-					for ( m = 0; m < module.length; m += 1 ) {
-						deps = resolve( module[m] );
-						for ( n = 0; n < deps.length; n += 1 ) {
-							modules[modules.length] = deps[n];
-						}
-					}
-					return modules;
-				} else if ( typeof module === 'string' ) {
 					resolved = [];
-					recurse( module, resolved, [] );
+					for ( m = 0; m < module.length; m += 1 ) {
+						sortDependencies( module[m], resolved );
+					}
 					return resolved;
 				}
+
+				if ( typeof module === 'string' ) {
+					resolved = [];
+					sortDependencies( module, resolved );
+					return resolved;
+				}
+
 				throw new Error( 'Invalid module argument: ' + module );
 			}
 
@@ -674,48 +739,105 @@ var mw = ( function ( $, undefined ) {
 			}
 
 			/**
-			 * Automatically executes jobs and modules which are pending with satistifed dependencies.
+			 * Determine whether all dependencies are in state 'ready', which means we may
+			 * execute the module or job now.
 			 *
-			 * This is used when dependencies are satisfied, such as when a module is executed.
+			 * @param dependencies Array dependencies (module names) to be checked.
+			 *
+			 * @return Boolean true if all dependencies are in state 'ready', false otherwise
+			 */
+			function allReady( dependencies ) {
+				return filter( 'ready', dependencies ).length === dependencies.length;
+			}
+
+			/**
+			 * Log a message to window.console, if possible. Useful to force logging of some
+			 * errors that are otherwise hard to detect (I.e., this logs also in production mode).
+			 * Gets console references in each invocation, so that delayed debugging tools work
+			 * fine. No need for optimization here, which would only result in losing logs.
+			 *
+			 * @param msg String text for the log entry.
+			 * @param e Error [optional] to also log.
+			 */
+			function log( msg, e ) {
+				var console = window.console;
+				if ( console && console.log ) {
+					console.log( msg );
+					// If we have an exception object, log it through .error() to trigger
+					// proper stacktraces in browsers that support it. There are no (known)
+					// browsers that don't support .error(), that do support .log() and
+					// have useful exception handling through .log().
+					if ( e && console.error ) {
+						console.error( e );
+					}
+				}
+			}
+
+			/**
+			 * A module has entered state 'ready', 'error', or 'missing'. Automatically update pending jobs
+			 * and modules that depend upon this module. if the given module failed, propagate the 'error'
+			 * state up the dependency tree; otherwise, execute all jobs/modules that now have all their
+			 * dependencies satisfied. On jobs depending on a failed module, run the error callback, if any.
+			 *
+			 * @param module String name of module that entered one of the states 'ready', 'error', or 'missing'.
 			 */
 			function handlePending( module ) {
-				var j, r;
+				var j, job, hasErrors, m, stateChange;
 
-				try {
-					// Run jobs whose dependencies have just been met
-					for ( j = 0; j < jobs.length; j += 1 ) {
-						if ( compare(
-							filter( 'ready', jobs[j].dependencies ),
-							jobs[j].dependencies ) )
-						{
-							var callback = jobs[j].ready;
-							jobs.splice( j, 1 );
-							j -= 1;
-							if ( $.isFunction( callback ) ) {
-								callback();
+				// Modules.
+				if ( $.inArray( registry[module].state, ['error', 'missing'] ) !== -1 ) {
+					// If the current module failed, mark all dependent modules also as failed.
+					// Iterate until steady-state to propagate the error state upwards in the
+					// dependency tree.
+					do {
+						stateChange = false;
+						for ( m in registry ) {
+							if ( $.inArray( registry[m].state, ['error', 'missing'] ) === -1 ) {
+								if ( filter( ['error', 'missing'], registry[m].dependencies ).length > 0 ) {
+									registry[m].state = 'error';
+									stateChange = true;
+								}
+							}
+						}
+					} while ( stateChange );
+				}
+
+				// Execute all jobs whose dependencies are either all satisfied or contain at least one failed module.
+				for ( j = 0; j < jobs.length; j += 1 ) {
+					hasErrors = filter( ['error', 'missing'], jobs[j].dependencies ).length > 0;
+					if ( hasErrors || allReady( jobs[j].dependencies ) ) {
+						// All dependencies satisfied, or some have errors
+						job = jobs[j];
+						jobs.splice( j, 1 );
+						j -= 1;
+						try {
+							if ( hasErrors ) {
+								throw new Error ("Module " + module + " failed.");
+							} else {
+								if ( $.isFunction( job.ready ) ) {
+									job.ready();
+								}
+							}
+						} catch ( e ) {
+							if ( $.isFunction( job.error ) ) {
+								try {
+									job.error( e, [module] );
+								} catch ( ex ) {
+									// A user-defined operation raised an exception. Swallow to protect
+									// our state machine!
+									log( 'Exception thrown by job.error()', ex );
+								}
 							}
 						}
 					}
-					// Execute modules whose dependencies have just been met
-					for ( r in registry ) {
-						if ( registry[r].state === 'loaded' ) {
-							if ( compare(
-								filter( ['ready'], registry[r].dependencies ),
-								registry[r].dependencies ) )
-							{
-								execute( r );
-							}
-						}
-					}
-				} catch ( e ) {
-					// Run error callbacks of jobs affected by this condition
-					for ( j = 0; j < jobs.length; j += 1 ) {
-						if ( $.inArray( module, jobs[j].dependencies ) !== -1 ) {
-							if ( $.isFunction( jobs[j].error ) ) {
-								jobs[j].error( e, module );
-							}
-							jobs.splice( j, 1 );
-							j -= 1;
+				}
+
+				if ( registry[module].state === 'ready' ) {
+					// The current module became 'ready'. Recursively execute all dependent modules that are loaded
+					// and now have all dependencies satisfied.
+					for ( m in registry ) {
+						if ( registry[m].state === 'loaded' && allReady( registry[m].dependencies ) ) {
+							execute( m );
 						}
 					}
 					throw e;
@@ -724,14 +846,19 @@ var mw = ( function ( $, undefined ) {
 
 			/**
 			 * Adds a script tag to the DOM, either using document.write or low-level DOM manipulation,
-			 * depending on whether document-ready has occured yet and whether we are in async mode.
+			 * depending on whether document-ready has occurred yet and whether we are in async mode.
 			 *
 			 * @param src String: URL to script, will be used as the src attribute in the script tag
 			 * @param callback Function: Optional callback which will be run when the script is done
 			 */
 			function addScript( src, callback, async ) {
-				var done = false, script, head;
-				if ( ready || async ) {
+				/*jshint evil:true */
+				var script, head,
+					done = false;
+
+				// Using isReady directly instead of storing it locally from
+				// a $.fn.ready callback (bug 31895).
+				if ( $.isReady || async ) {
 					// jQuery's getScript method is NOT better than doing this the old-fashioned way
 					// because jQuery will eval the script's code, and errors will not have sane
 					// line numbers.
@@ -740,7 +867,7 @@ var mw = ( function ( $, undefined ) {
 					script.setAttribute( 'type', 'text/javascript' );
 					if ( $.isFunction( callback ) ) {
 						// Attach handlers for all browsers (based on jQuery.ajax)
-						script.onload = script.onreadystatechange = function() {
+						script.onload = script.onreadystatechange = function () {
 
 							if (
 								!done
@@ -777,7 +904,7 @@ var mw = ( function ( $, undefined ) {
 						// scripts only start loading after  the document has been rendered,
 						// but so be it. Opera users don't deserve faster web pages if their
 						// browser makes it impossible
-						$( function() { document.body.appendChild( script ); } );
+						$( function () { document.body.appendChild( script ); } );
 					} else {
 						// IE-safe way of getting the <head> . document.documentElement.head doesn't
 						// work in scripts that run in the <head>
@@ -801,8 +928,8 @@ var mw = ( function ( $, undefined ) {
 			 *
 			 * @param module string module name to execute
 			 */
-			function execute( module, callback ) {
-				var style, media, i, script, markModuleReady, nestedAddScript;
+			function execute( module ) {
+				var key, value, media, i, urls, script, markModuleReady, nestedAddScript;
 
 				if ( registry[module] === undefined ) {
 					throw new Error( 'Module has not been registered yet: ' + module );
@@ -814,37 +941,83 @@ var mw = ( function ( $, undefined ) {
 					throw new Error( 'Module has already been loaded: ' + module );
 				}
 
-				// Add styles
+				/**
+				 * Define loop-function here for efficiency
+				 * and to avoid re-using badly scoped variables.
+				 */
+				function addLink( media, url ) {
+					var el = document.createElement( 'link' );
+					getMarker().before( el ); // IE: Insert in dom before setting href
+					el.rel = 'stylesheet';
+					if ( media && media !== 'all' ) {
+						el.media = media;
+					}
+					el.href = url;
+				}
+
+				// Process styles (see also mw.loader.implement)
+				// * back-compat: { <media>: css }
+				// * back-compat: { <media>: [url, ..] }
+				// * { "css": [css, ..] }
+				// * { "url": { <media>: [url, ..] } }
 				if ( $.isPlainObject( registry[module].style ) ) {
-					for ( media in registry[module].style ) {
-						style = registry[module].style[media];
-						if ( $.isArray( style ) ) {
-							for ( i = 0; i < style.length; i += 1 ) {
-								getMarker().before( mw.html.element( 'link', {
-									'type': 'text/css',
-									'media': media,
-									'rel': 'stylesheet',
-									'href': style[i]
-								} ) );
+					for ( key in registry[module].style ) {
+						value = registry[module].style[key];
+						media = undefined;
+
+						if ( key !== 'url' && key !== 'css' ) {
+							// Backwards compatibility, key is a media-type
+							if ( typeof value === 'string' ) {
+								// back-compat: { <media>: css }
+								// Ignore 'media' because it isn't supported (nor was it used).
+								// Strings are pre-wrapped in "@media". The media-type was just ""
+								// (because it had to be set to something).
+								// This is one of the reasons why this format is no longer used.
+								addEmbeddedCSS( value );
+							} else {
+								// back-compat: { <media>: [url, ..] }
+								media = key;
+								key = 'bc-url';
 							}
-						} else if ( typeof style === 'string' ) {
-							addInlineCSS( style, media );
+						}
+
+						// Array of css strings in key 'css',
+						// or back-compat array of urls from media-type
+						if ( $.isArray( value ) ) {
+							for ( i = 0; i < value.length; i += 1 ) {
+								if ( key === 'bc-url' ) {
+									// back-compat: { <media>: [url, ..] }
+									addLink( media, value[i] );
+								} else if ( key === 'css' ) {
+									// { "css": [css, ..] }
+									addEmbeddedCSS( value[i] );
+								}
+							}
+						// Not an array, but a regular object
+						// Array of urls inside media-type key
+						} else if ( typeof value === 'object' ) {
+							// { "url": { <media>: [url, ..] } }
+							for ( media in value ) {
+								urls = value[media];
+								for ( i = 0; i < urls.length; i += 1 ) {
+									addLink( media, urls[i] );
+								}
+							}
 						}
 					}
 				}
+
 				// Add localizations to message system
 				if ( $.isPlainObject( registry[module].messages ) ) {
 					mw.messages.set( registry[module].messages );
 				}
+
 				// Execute script
 				try {
 					script = registry[module].script;
-					markModuleReady = function() {
+					markModuleReady = function () {
 						registry[module].state = 'ready';
 						handlePending( module );
-						if ( $.isFunction( callback ) ) {
-							callback();
-						}
 					};
 					nestedAddScript = function ( arr, callback, async, i ) {
 						// Recursively call addScript() in its own callback
@@ -855,7 +1028,7 @@ var mw = ( function ( $, undefined ) {
 							return;
 						}
 
-						addScript( arr[i], function() {
+						addScript( arr[i], function () {
 							nestedAddScript( arr, callback, async, i + 1 );
 						}, async );
 					};
@@ -864,16 +1037,16 @@ var mw = ( function ( $, undefined ) {
 						registry[module].state = 'loading';
 						nestedAddScript( script, markModuleReady, registry[module].async, 0 );
 					} else if ( $.isFunction( script ) ) {
+						registry[module].state = 'ready';
 						script( $ );
-						markModuleReady();
+						handlePending( module );
 					}
 				} catch ( e ) {
 					// This needs to NOT use mw.log because these errors are common in production mode
 					// and not in debug mode, such as when a symbol that should be global isn't exported
-					if ( window.console && typeof window.console.log === 'function' ) {
-						console.log( 'mw.loader::execute> Exception thrown by ' + module + ': ' + e.message, e );
-					}
+					log( 'Exception thrown by ' + module + ': ' + e.message, e );
 					registry[module].state = 'error';
+					handlePending( module );
 				}
 			}
 
@@ -893,18 +1066,10 @@ var mw = ( function ( $, undefined ) {
 				// Allow calling by single module name
 				if ( typeof dependencies === 'string' ) {
 					dependencies = [dependencies];
-					if ( registry[dependencies[0]] !== undefined ) {
-						// Cache repetitively accessed deep level object member
-						regItemDeps = registry[dependencies[0]].dependencies;
-						// Cache to avoid looped access to length property
-						regItemDepLen = regItemDeps.length;
-						for ( n = 0; n < regItemDepLen; n += 1 ) {
-							dependencies[dependencies.length] = regItemDeps[n];
-						}
-					}
 				}
+
 				// Add ready and error callbacks if they were given
-				if ( arguments.length > 1 ) {
+				if ( ready !== undefined || error !== undefined ) {
 					jobs[jobs.length] = {
 						'dependencies': filter(
 							['registered', 'loading', 'loaded'],
@@ -914,6 +1079,7 @@ var mw = ( function ( $, undefined ) {
 						'error': error
 					};
 				}
+
 				// Queue up any dependencies that are registered
 				dependencies = filter( ['registered'], dependencies );
 				for ( n = 0; n < dependencies.length; n += 1 ) {
@@ -925,6 +1091,7 @@ var mw = ( function ( $, undefined ) {
 						}
 					}
 				}
+
 				// Work the queue
 				mw.loader.work();
 			}
@@ -991,6 +1158,8 @@ var mw = ( function ( $, undefined ) {
 
 			/* Public Methods */
 			return {
+				addStyleTag: addStyleTag,
+
 				/**
 				 * Requests dependencies from server, loading and executing when things when ready.
 				 */
@@ -1074,11 +1243,17 @@ var mw = ( function ( $, undefined ) {
 							}
 
 							currReqBase = $.extend( { 'version': formatVersionNumber( maxVersion ) }, reqBase );
+
 							// Wikia change - begin - @author: wladek
 							// PER-58: add style version
 							currReqBase.version = (window.wgStyleVersion ? window.wgStyleVersion + '-' : '')
 								+ currReqBase.version;
 							// Wikia change - end
+
+							// For user modules append a user name to the request.
+							if ( group === "user" && mw.config.get( 'wgUserName' ) !== null ) {
+								currReqBase.user = mw.config.get( 'wgUserName' );
+							}
 
 							currReqBaseLength = $.param( currReqBase ).length;
 							async = true;
@@ -1246,12 +1421,20 @@ var mw = ( function ( $, undefined ) {
 				 *
 				 * All arguments are required.
 				 *
-				 * @param module String: Name of module
-				 * @param script Mixed: Function of module code or String of URL to be used as the src
-				 *  attribute when adding a script element to the body
-				 * @param style Object: Object of CSS strings keyed by media-type or Object of lists of URLs
-				 *  keyed by media-type
-				 * @param msgs Object: List of key/value pairs to be passed through mw.messages.set
+				 * @param {String} module Name of module
+				 * @param {Function|Array} script Function with module code or Array of URLs to
+				 *  be used as the src attribute of a new <script> tag.
+				 * @param {Object} style Should follow one of the following patterns:
+				 *  { "css": [css, ..] }
+				 *  { "url": { <media>: [url, ..] } }
+				 *  And for backwards compatibility (needs to be supported forever due to caching):
+				 *  { <media>: css }
+				 *  { <media>: [url, ..] }
+				 *
+				 *  The reason css strings are not concatenated anymore is bug 31676. We now check
+				 *  whether it's safe to extend the stylesheet (see canExpandStylesheetWith).
+				 *
+				 * @param {Object} msgs List of key/value pairs to be passed through mw.messages.set
 				 */
 				implement: function ( module, script, style, msgs ) {
 					// Validate input
@@ -1275,18 +1458,16 @@ var mw = ( function ( $, undefined ) {
 					if ( registry[module] !== undefined && registry[module].script !== undefined ) {
 						throw new Error( 'module already implemented: ' + module );
 					}
-					// Mark module as loaded
-					registry[module].state = 'loaded';
 					// Attach components
 					registry[module].script = script;
 					registry[module].style = style;
 					registry[module].messages = msgs;
-					// Execute or queue callback
-					if ( compare(
-						filter( ['ready'], registry[module].dependencies ),
-						registry[module].dependencies ) )
-					{
-						execute( module );
+					// The module may already have been marked as erroneous
+					if ( $.inArray( registry[module].state, ['error', 'missing'] ) === -1 ) {
+						registry[module].state = 'loaded';
+						if ( allReady( registry[module].dependencies ) ) {
+							execute( module );
+						}
 					}
 				},
 
@@ -1317,20 +1498,21 @@ var mw = ( function ( $, undefined ) {
 					}
 					// Resolve entire dependency map
 					dependencies = resolve( dependencies );
-					// If all dependencies are met, execute ready immediately
-					if ( compare( filter( ['ready'], dependencies ), dependencies ) ) {
-						deferred.resolve();
-					}
-					// If any dependencies have errors execute error immediately
-					else if ( filter( ['error'], dependencies ).length ) {
-						deferred.reject(
-							new Error( 'One or more dependencies failed to load' ),
-							dependencies
-						);
-					}
-					// Since some dependencies are not yet ready, queue up a request
-					else {
-						request( dependencies, deferred.resolve, deferred.reject );
+
+					if ( allReady( dependencies ) ) {
+						// Run ready immediately
+						if ( $.isFunction( ready ) ) {
+							ready();
+						}
+					} else if ( filter( ['error', 'missing'], dependencies ).length ) {
+						// Execute error immediately if any dependencies have errors
+						if ( $.isFunction( error ) ) {
+							error( new Error( 'one or more dependencies have state "error" or "missing"' ),
+								dependencies );
+						}
+					} else {
+						// Not all dependencies are ready: queue up a request
+						request( dependencies, ready, error );
 					}
 					return deferred.promise();
 				},
@@ -1349,7 +1531,7 @@ var mw = ( function ( $, undefined ) {
 				 *  be assumed if loading a URL, and false will be assumed otherwise.
 				 */
 				load: function ( modules, type, async ) {
-					var filtered, m;
+					var filtered, m, module;
 
 					// Validate input
 					if ( typeof modules !== 'object' && typeof modules !== 'string' ) {
@@ -1370,7 +1552,8 @@ var mw = ( function ( $, undefined ) {
 									href: modules
 								} ) );
 								return;
-							} else if ( type === 'text/javascript' || type === undefined ) {
+							}
+							if ( type === 'text/javascript' || type === undefined ) {
 								addScript( modules, null, async );
 								return;
 							}
@@ -1387,26 +1570,29 @@ var mw = ( function ( $, undefined ) {
 					// an array of unrelated modules, whereas the modules passed to
 					// using() are related and must all be loaded.
 					for ( filtered = [], m = 0; m < modules.length; m += 1 ) {
-						if ( registry[modules[m]] !== undefined ) {
-							filtered[filtered.length] = modules[m];
+						module = registry[modules[m]];
+						if ( module !== undefined ) {
+							if ( $.inArray( module.state, ['error', 'missing'] ) === -1 ) {
+								filtered[filtered.length] = modules[m];
+							}
 						}
 					}
 
+					if ( filtered.length === 0 ) {
+						return;
+					}
 					// Resolve entire dependency map
 					filtered = resolve( filtered );
-					// If all modules are ready, nothing dependency be done
-					if ( compare( filter( ['ready'], filtered ), filtered ) ) {
+					// If all modules are ready, nothing to be done
+					if ( allReady( filtered ) ) {
 						return;
 					}
-					// If any modules have errors
-					else if ( filter( ['error'], filtered ).length ) {
+					// If any modules have errors: also quit.
+					if ( filter( ['error', 'missing'], filtered ).length ) {
 						return;
 					}
-					// Since some modules are not yet ready, queue up a request
-					else {
-						request( filtered, null, null, async );
-						return;
-					}
+					// Since some modules are not yet ready, queue up a request.
+					request( filtered, null, null, async );
 				},
 
 				/**
@@ -1417,6 +1603,7 @@ var mw = ( function ( $, undefined ) {
 				 */
 				state: function ( module, state ) {
 					var m;
+
 					if ( typeof module === 'object' ) {
 						for ( m in module ) {
 							mw.loader.state( m, module[m] );
@@ -1426,7 +1613,15 @@ var mw = ( function ( $, undefined ) {
 					if ( registry[module] === undefined ) {
 						mw.loader.register( module );
 					}
-					registry[module].state = state;
+					if ( $.inArray(state, ['ready', 'error', 'missing']) !== -1
+						&& registry[module].state !== state ) {
+						// Make sure pending modules depending on this one get executed if their
+						// dependencies are now fulfilled!
+						registry[module].state = state;
+						handlePending( module );
+					} else {
+						registry[module].state = state;
+					}
 				},
 
 				/**
@@ -1682,7 +1877,7 @@ var mw = ( function ( $, undefined ) {
 
 	};
 
-})( jQuery );
+}( jQuery ) );
 
 // Alias $j to jQuery for backwards compatibility
 window.$j = jQuery;
@@ -1691,7 +1886,7 @@ window.$j = jQuery;
 window.mw = window.mediaWiki = mw;
 
 // Auto-register from pre-loaded startup scripts
-if ( typeof startUp !== 'undefined' && jQuery.isFunction( startUp ) ) {
-	startUp();
-	startUp = undefined;
+if ( jQuery.isFunction( window.startUp ) ) {
+	window.startUp();
+	window.startUp = undefined;
 }

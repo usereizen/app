@@ -113,9 +113,9 @@ class SpecialStatistics extends SpecialPage {
 		if( $descMsg ) {
 			$msg = wfMessage( $descMsg, $descMsgParam );
 			if ( $msg->exists() ) {
-				$descriptionText = $msg->parse();
+				$descriptionText = $this->msg( 'parentheses' )->rawParams( $msg->parse() )->escaped();
 				$text .= "<br />" . Xml::element( 'small', array( 'class' => 'mw-statistic-desc'),
-					" ($descriptionText)" );
+					" $descriptionText" );
 			}
 		}
 		return Html::rawElement( 'tr', $trExtraParams,

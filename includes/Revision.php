@@ -1,4 +1,24 @@
 <?php
+/**
+ * Representation of a page version.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * @file
+ */
 
 /**
  * @todo document
@@ -42,6 +62,7 @@ class Revision implements IDBAccessObject {
 	 *      Revision::READ_LOCKING : Select & lock the data from the master
 	 *
 	 * @param $id Integer
+	 * @param $flags Integer (optional)
 	 * @return Revision or null
 	 */
 	public static function newFromId( $id, $flags = 0 ) {
@@ -100,6 +121,8 @@ class Revision implements IDBAccessObject {
 		} else {
 			// Use a join to get the latest revision
 			$conds[] = 'rev_id = page_latest';
+			// Callers assume this will be up-to-date
+			$flags = is_int( $flags ) ? $flags : self::READ_LATEST; // b/c
 		}
 		return self::newFromConds( $conds, (int)$flags );
 	}
@@ -331,6 +354,7 @@ class Revision implements IDBAccessObject {
 		if ( ( $flags & self::READ_LOCKING ) == self::READ_LOCKING ) {
 			$options[] = 'LOCK IN SHARE MODE';
 		}
+
 		return $db->select(
 			array( 'revision', 'page', 'user' ),
 			$fields,
@@ -401,7 +425,9 @@ class Revision implements IDBAccessObject {
 			'page_namespace',
 			'page_title',
 			'page_id',
-			'page_latest'
+			'page_latest',
+			'page_is_redirect',
+			'page_len',
 		);
 	}
 
@@ -410,6 +436,29 @@ class Revision implements IDBAccessObject {
 	 */
 	public static function selectUserFields() {
 		return array( 'user_name' );
+	}
+
+	/**
+	 * Do a batched query to get the parent revision lengths
+	 * @param $db DatabaseBase
+	 * @param $revIds Array
+	 * @return array
+	 */
+	public static function getParentLengths( $db, array $revIds ) {
+		$revLens = array();
+		if ( !$revIds ) {
+			return $revLens; // empty
+		}
+		wfProfileIn( __METHOD__ );
+		$res = $db->select( 'revision',
+			array( 'rev_id', 'rev_len' ),
+			array( 'rev_id' => $revIds ),
+			__METHOD__ );
+		foreach ( $res as $row ) {
+			$revLens[$row->rev_id] = $row->rev_len;
+		}
+		wfProfileOut( __METHOD__ );
+		return $revLens;
 	}
 
 	/**
@@ -512,7 +561,7 @@ class Revision implements IDBAccessObject {
 	/**
 	 * Get revision ID
 	 *
-	 * @return Integer
+	 * @return Integer|null
 	 */
 	public function getId() {
 		return $this->mId;
@@ -531,7 +580,7 @@ class Revision implements IDBAccessObject {
 	/**
 	 * Get text row ID
 	 *
-	 * @return Integer
+	 * @return Integer|null
 	 */
 	public function getTextId() {
 		return $this->mTextId;
@@ -549,7 +598,7 @@ class Revision implements IDBAccessObject {
 	/**
 	 * Returns the length of the text in this revision, or null if unknown.
 	 *
-	 * @return Integer
+	 * @return Integer|null
 	 */
 	public function getSize() {
 		return $this->mSize;
@@ -558,16 +607,18 @@ class Revision implements IDBAccessObject {
 	/**
 	 * Returns the base36 sha1 of the text in this revision, or null if unknown.
 	 *
-	 * @return String
+	 * @return String|null
 	 */
 	public function getSha1() {
 		return $this->mSha1;
 	}
 
 	/**
-	 * Returns the title of the page associated with this entry.
+	 * Returns the title of the page associated with this entry or null.
 	 *
-	 * @return Title
+	 * Will do a query, when title is not set and id is given.
+	 *
+	 * @return Title|null
 	 */
 	/* Wikia changes start */
 	/* Wikia added possibility to use master */
@@ -576,18 +627,25 @@ class Revision implements IDBAccessObject {
 		if( isset( $this->mTitle ) ) {
 			return $this->mTitle;
 		}
+
 		/* Wikia changes start */
 		$dbr = ( !$useMaster ? wfGetDB( DB_SLAVE ) : wfGetDB( DB_MASTER ) );
 		/* Wikia changes end */
-		$row = $dbr->selectRow(
-			array( 'page', 'revision' ),
-			self::selectPageFields(),
-			array( 'page_id=rev_page',
-				   'rev_id' => $this->mId ),
-			__METHOD__ );
-		if ( $row ) {
-			$this->mTitle = Title::newFromRow( $row );
+
+		if ( !is_null( $this->mId ) ) { //rev_id is defined as NOT NULL
+			$dbr = wfGetDB( DB_SLAVE );
+			$row = $dbr->selectRow(
+				array( 'page', 'revision' ),
+				self::selectPageFields(),
+				array( 'page_id=rev_page',
+					   'rev_id' => $this->mId ),
+				__METHOD__ );
+
+			if ( $row ) {
+				$this->mTitle = Title::newFromRow( $row );
+			}
 		}
+
 		return $this->mTitle;
 	}
 
@@ -603,7 +661,7 @@ class Revision implements IDBAccessObject {
 	/**
 	 * Get the page ID
 	 *
-	 * @return Integer
+	 * @return Integer|null
 	 */
 	public function getPage() {
 		return $this->mPage;
@@ -616,7 +674,7 @@ class Revision implements IDBAccessObject {
 	 *
 	 * @param $audience Integer: one of:
 	 *      Revision::FOR_PUBLIC       to be displayed to all users
-	 *      Revision::FOR_THIS_USER    to be displayed to $wgUser
+	 *      Revision::FOR_THIS_USER    to be displayed to the given user
 	 *      Revision::RAW              get the ID regardless of permissions
 	 * @param $user User object to check for, only if FOR_THIS_USER is passed
 	 *              to the $audience parameter
@@ -648,7 +706,7 @@ class Revision implements IDBAccessObject {
 	 *
 	 * @param $audience Integer: one of:
 	 *      Revision::FOR_PUBLIC       to be displayed to all users
-	 *      Revision::FOR_THIS_USER    to be displayed to $wgUser
+	 *      Revision::FOR_THIS_USER    to be displayed to the given user
 	 *      Revision::RAW              get the text regardless of permissions
 	 * @param $user User object to check for, only if FOR_THIS_USER is passed
 	 *              to the $audience parameter
@@ -688,7 +746,7 @@ class Revision implements IDBAccessObject {
 	 *
 	 * @param $audience Integer: one of:
 	 *      Revision::FOR_PUBLIC       to be displayed to all users
-	 *      Revision::FOR_THIS_USER    to be displayed to $wgUser
+	 *      Revision::FOR_THIS_USER    to be displayed to the given user
 	 *      Revision::RAW              get the text regardless of permissions
 	 * @param $user User object to check for, only if FOR_THIS_USER is passed
 	 *              to the $audience parameter
@@ -766,7 +824,7 @@ class Revision implements IDBAccessObject {
 	 *
 	 * @param $audience Integer: one of:
 	 *      Revision::FOR_PUBLIC       to be displayed to all users
-	 *      Revision::FOR_THIS_USER    to be displayed to $wgUser
+	 *      Revision::FOR_THIS_USER    to be displayed to the given user
 	 *      Revision::RAW              get the text regardless of permissions
 	 * @param $user User object to check for, only if FOR_THIS_USER is passed
 	 *              to the $audience parameter
@@ -1156,7 +1214,8 @@ class Revision implements IDBAccessObject {
 
 		$current = $dbw->selectRow(
 			array( 'page', 'revision' ),
-			array( 'page_latest', 'rev_text_id', 'rev_len', 'rev_sha1' ),
+			array( 'page_latest', 'page_namespace', 'page_title',
+				'rev_text_id', 'rev_len', 'rev_sha1' ),
 			array(
 				'page_id' => $pageId,
 				'page_latest=rev_id',
@@ -1173,6 +1232,7 @@ class Revision implements IDBAccessObject {
 				'len'        => $current->rev_len,
 				'sha1'       => $current->rev_sha1
 				) );
+			$revision->setTitle( Title::makeTitle( $current->page_namespace, $current->page_title ) );
 		} else {
 			$revision = null;
 		}
@@ -1241,7 +1301,7 @@ class Revision implements IDBAccessObject {
 			$id = 0;
 		}
 		$conds = array( 'rev_id' => $id );
-		$conds['rev_page'] = $title->getArticleId();
+		$conds['rev_page'] = $title->getArticleID();
 		$timestamp = $dbr->selectField( 'revision', 'rev_timestamp', $conds, __METHOD__ );
 		if ( $timestamp === false && wfGetLB()->getServerCount() > 1 ) {
 			# Not in slave, try master
@@ -1259,7 +1319,7 @@ class Revision implements IDBAccessObject {
 	 * @return Integer
 	 */
 	static function countByPageId( $db, $id ) {
-		$row = $db->selectRow( 'revision', 'COUNT(*) AS revCount',
+		$row = $db->selectRow( 'revision', array( 'revCount' => 'COUNT(*)' ),
 			array( 'rev_page' => $id ), __METHOD__ );
 		if( $row ) {
 			return $row->revCount;
@@ -1275,7 +1335,7 @@ class Revision implements IDBAccessObject {
 	 * @return Integer
 	 */
 	static function countByTitle( $db, $title ) {
-		$id = $title->getArticleId();
+		$id = $title->getArticleID();
 		if( $id ) {
 			return self::countByPageId( $db, $id );
 		}
@@ -1293,4 +1353,41 @@ class Revision implements IDBAccessObject {
 	}
 	/** End Wikia Change **/
 
+	/**
+	 * Check if no edits were made by other users since
+	 * the time a user started editing the page. Limit to
+	 * 50 revisions for the sake of performance.
+	 *
+	 * @since 1.20
+	 *
+	 * @param DatabaseBase|int $db the Database to perform the check on. May be given as a Database object or
+	 *        a database identifier usable with wfGetDB.
+	 * @param int $pageId the ID of the page in question
+	 * @param int $userId the ID of the user in question
+	 * @param string $since look at edits since this time
+	 *
+	 * @return bool True if the given user was the only one to edit since the given timestamp
+	 */
+	public static function userWasLastToEdit( $db, $pageId, $userId, $since ) {
+		if ( !$userId ) return false;
+
+		if ( is_int( $db ) ) {
+			$db = wfGetDB( $db );
+		}
+
+		$res = $db->select( 'revision',
+			'rev_user',
+			array(
+				'rev_page' => $pageId,
+				'rev_timestamp > ' . $db->addQuotes( $db->timestamp( $since ) )
+			),
+			__METHOD__,
+			array( 'ORDER BY' => 'rev_timestamp ASC', 'LIMIT' => 50 ) );
+		foreach ( $res as $row ) {
+			if ( $row->rev_user != $userId ) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

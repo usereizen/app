@@ -301,7 +301,7 @@
 					&&	!$.ui.contains(this.placeholder[0], itemElement) //no action if the item moved is the parent of the item checked
 					&& (this.options.type == 'semi-dynamic' ? !$.ui.contains(this.element[0], itemElement) : true)
 				//&& itemElement.parentNode == this.placeholder[0].parentNode // only rearrange items within the same container
-					) {
+				) {
 
 					this.direction = intersection == 1 ? "down" : "up";
 
@@ -454,7 +454,7 @@
 			if(	   this.options.tolerance == "pointer"
 				|| this.options.forcePointerForContainers
 				|| (this.options.tolerance != "pointer" && this.helperProportions[this.floating ? 'width' : 'height'] > item[this.floating ? 'width' : 'height'])
-				) {
+			) {
 				return isOverElement;
 			} else {
 
@@ -890,16 +890,16 @@
 			return {
 				top: (
 					pos.top																	// The absolute mouse position
-						+ this.offset.relative.top * mod										// Only for relative positioned nodes: Relative offset from element to offset parent
-						+ this.offset.parent.top * mod											// The offsetParent's offset without borders (offset + border)
-						- ($.browser.safari && this.cssPosition == 'fixed' ? 0 : ( this.cssPosition == 'fixed' ? -this.scrollParent.scrollTop() : ( scrollIsRootNode ? 0 : scroll.scrollTop() ) ) * mod)
-					),
+					+ this.offset.relative.top * mod										// Only for relative positioned nodes: Relative offset from element to offset parent
+					+ this.offset.parent.top * mod											// The offsetParent's offset without borders (offset + border)
+					- ($.browser.safari && this.cssPosition == 'fixed' ? 0 : ( this.cssPosition == 'fixed' ? -this.scrollParent.scrollTop() : ( scrollIsRootNode ? 0 : scroll.scrollTop() ) ) * mod)
+				),
 				left: (
 					pos.left																// The absolute mouse position
-						+ this.offset.relative.left * mod										// Only for relative positioned nodes: Relative offset from element to offset parent
-						+ this.offset.parent.left * mod											// The offsetParent's offset without borders (offset + border)
-						- ($.browser.safari && this.cssPosition == 'fixed' ? 0 : ( this.cssPosition == 'fixed' ? -this.scrollParent.scrollLeft() : scrollIsRootNode ? 0 : scroll.scrollLeft() ) * mod)
-					)
+					+ this.offset.relative.left * mod										// Only for relative positioned nodes: Relative offset from element to offset parent
+					+ this.offset.parent.left * mod											// The offsetParent's offset without borders (offset + border)
+					- ($.browser.safari && this.cssPosition == 'fixed' ? 0 : ( this.cssPosition == 'fixed' ? -this.scrollParent.scrollLeft() : scrollIsRootNode ? 0 : scroll.scrollLeft() ) * mod)
+				)
 			};
 
 		},
@@ -946,18 +946,18 @@
 			return {
 				top: (
 					pageY																// The absolute mouse position
-						- this.offset.click.top													// Click offset (relative to the element)
-						- this.offset.relative.top												// Only for relative positioned nodes: Relative offset from element to offset parent
-						- this.offset.parent.top												// The offsetParent's offset without borders (offset + border)
-						+ ($.browser.safari && this.cssPosition == 'fixed' ? 0 : ( this.cssPosition == 'fixed' ? -this.scrollParent.scrollTop() : ( scrollIsRootNode ? 0 : scroll.scrollTop() ) ))
-					),
+					- this.offset.click.top													// Click offset (relative to the element)
+					- this.offset.relative.top												// Only for relative positioned nodes: Relative offset from element to offset parent
+					- this.offset.parent.top												// The offsetParent's offset without borders (offset + border)
+					+ ($.browser.safari && this.cssPosition == 'fixed' ? 0 : ( this.cssPosition == 'fixed' ? -this.scrollParent.scrollTop() : ( scrollIsRootNode ? 0 : scroll.scrollTop() ) ))
+				),
 				left: (
 					pageX																// The absolute mouse position
-						- this.offset.click.left												// Click offset (relative to the element)
-						- this.offset.relative.left												// Only for relative positioned nodes: Relative offset from element to offset parent
-						- this.offset.parent.left												// The offsetParent's offset without borders (offset + border)
-						+ ($.browser.safari && this.cssPosition == 'fixed' ? 0 : ( this.cssPosition == 'fixed' ? -this.scrollParent.scrollLeft() : scrollIsRootNode ? 0 : scroll.scrollLeft() ))
-					)
+					- this.offset.click.left												// Click offset (relative to the element)
+					- this.offset.relative.left												// Only for relative positioned nodes: Relative offset from element to offset parent
+					- this.offset.parent.left												// The offsetParent's offset without borders (offset + border)
+					+ ($.browser.safari && this.cssPosition == 'fixed' ? 0 : ( this.cssPosition == 'fixed' ? -this.scrollParent.scrollLeft() : scrollIsRootNode ? 0 : scroll.scrollLeft() ))
+				)
 			};
 
 		},

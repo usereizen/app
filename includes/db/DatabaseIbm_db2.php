@@ -2,7 +2,22 @@
 /**
  * This is the IBM DB2 database abstraction layer.
  * See maintenance/ibm_db2/README for development notes
- * and other specific information
+ * and other specific information.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * http://www.gnu.org/copyleft/gpl.html
  *
  * @file
  * @ingroup Database
@@ -130,21 +145,21 @@ class IBM_DB2Result{
 	 */
 	public function __construct( $db, $result, $num_rows, $sql, $columns ){
 		$this->db = $db;
-		
+
 		if( $result instanceof ResultWrapper ){
 			$this->result = $result->result;
 		}
 		else{
 			$this->result = $result;
 		}
-		
+
 		$this->num_rows = $num_rows;
 		$this->current_pos = 0;
 		if ( $this->num_rows > 0 ) {
 			// Make a lower-case list of the column names
 			// By default, DB2 column names are capitalized
 			//  while MySQL column names are lowercase
-			
+
 			// Is there a reasonable maximum value for $i?
 			// Setting to 2048 to prevent an infinite loop
 			for( $i = 0; $i < 2048; $i++ ) {
@@ -155,11 +170,11 @@ class IBM_DB2Result{
 				else {
 					return false;
 				}
-				
+
 				$this->columns[$i] = strtolower( $name );
 			}
 		}
-		
+
 		$this->sql = $sql;
 	}
 
@@ -187,14 +202,14 @@ class IBM_DB2Result{
 	 * @return mixed Object on success, false on failure.
 	 */
 	public function fetchObject() {
-		if ( $this->result 
-				&& $this->num_rows > 0 
-				&& $this->current_pos >= 0 
-				&& $this->current_pos < $this->num_rows ) 
+		if ( $this->result
+				&& $this->num_rows > 0
+				&& $this->current_pos >= 0
+				&& $this->current_pos < $this->num_rows )
 		{
 			$row = $this->fetchRow();
 			$ret = new stdClass();
-			
+
 			foreach ( $row as $k => $v ) {
 				$lc = $this->columns[$k];
 				$ret->$lc = $v;
@@ -210,9 +225,9 @@ class IBM_DB2Result{
 	 * @throws DBUnexpectedError
 	 */
 	public function fetchRow(){
-		if ( $this->result 
-				&& $this->num_rows > 0 
-				&& $this->current_pos >= 0 
+		if ( $this->result
+				&& $this->num_rows > 0
+				&& $this->current_pos >= 0
 				&& $this->current_pos < $this->num_rows )
 		{
 			if ( $this->loadedLines <= $this->current_pos ) {
@@ -227,7 +242,7 @@ class IBM_DB2Result{
 			if ( $this->loadedLines > $this->current_pos ){
 				return $this->resultSet[$this->current_pos++];
 			}
-			
+
 		}
 		return false;
 	}
@@ -392,7 +407,7 @@ class DatabaseIbm_db2 extends DatabaseBase {
 		return 'ibm_db2';
 	}
 
-	/** 
+	/**
 	 * Returns the database connection object
 	 * @return Object
 	 */
@@ -547,16 +562,8 @@ class DatabaseIbm_db2 extends DatabaseBase {
 	 * Closes a database connection, if it is open
 	 * Returns success, true if already closed
 	 */
-	public function close() {
-		$this->mOpened = false;
-		if ( $this->mConn ) {
-			if ( $this->trxLevel() > 0 ) {
-				$this->commit();
-			}
-			return db2_close( $this->mConn );
-		} else {
-			return true;
-		}
+	protected function closeConnection() {
+		return db2_close( $this->mConn );
 	}
 
 	/**
@@ -566,12 +573,12 @@ class DatabaseIbm_db2 extends DatabaseBase {
 	public function lastError() {
 		$connerr = db2_conn_errormsg();
 		if ( $connerr ) {
-			//$this->rollback();
+			//$this->rollback( __METHOD__ );
 			return $connerr;
 		}
 		$stmterr = db2_stmt_errormsg();
 		if ( $stmterr ) {
-			//$this->rollback();
+			//$this->rollback( __METHOD__ );
 			return $stmterr;
 		}
 
@@ -780,16 +787,16 @@ class DatabaseIbm_db2 extends DatabaseBase {
 	protected function applySchema() {
 		if ( !( $this->mSchemaSet ) ) {
 			$this->mSchemaSet = true;
-			$this->begin();
+			$this->begin( __METHOD__ );
 			$this->doQuery( "SET SCHEMA = $this->mSchema" );
-			$this->commit();
+			$this->commit( __METHOD__ );
 		}
 	}
 
 	/**
 	 * Start a transaction (mandatory)
 	 */
-	public function begin( $fname = 'DatabaseIbm_db2::begin' ) {
+	protected function doBegin( $fname = 'DatabaseIbm_db2::begin' ) {
 		// BEGIN is implicit for DB2
 		// However, it requires that AutoCommit be off.
 
@@ -805,7 +812,7 @@ class DatabaseIbm_db2 extends DatabaseBase {
 	 * End a transaction
 	 * Must have a preceding begin()
 	 */
-	public function commit( $fname = 'DatabaseIbm_db2::commit' ) {
+	protected function doCommit( $fname = 'DatabaseIbm_db2::commit' ) {
 		db2_commit( $this->mConn );
 
 		// Some MediaWiki code is still transaction-less (?).
@@ -819,7 +826,7 @@ class DatabaseIbm_db2 extends DatabaseBase {
 	/**
 	 * Cancel a transaction
 	 */
-	public function rollback( $fname = 'DatabaseIbm_db2::rollback' ) {
+	protected function doRollback( $fname = 'DatabaseIbm_db2::rollback' ) {
 		db2_rollback( $this->mConn );
 		// turn auto-commit back on
 		// not sure if this is appropriate
@@ -1003,7 +1010,7 @@ class DatabaseIbm_db2 extends DatabaseBase {
 		$res = true;
 		// If we are not in a transaction, we need to be for savepoint trickery
 		if ( !$this->mTrxLevel ) {
-			$this->begin();
+			$this->begin( __METHOD__ );
 		}
 
 		$sql = "INSERT INTO $table ( " . implode( ',', $keys ) . ' ) VALUES ';
@@ -1018,7 +1025,7 @@ class DatabaseIbm_db2 extends DatabaseBase {
 		$stmt = $this->prepare( $sql );
 
 		// start a transaction/enter transaction mode
-		$this->begin();
+		$this->begin( __METHOD__ );
 
 		if ( !$ignore ) {
 			//$first = true;
@@ -1071,7 +1078,7 @@ class DatabaseIbm_db2 extends DatabaseBase {
 			$this->mAffectedRows = $numrowsinserted;
 		}
 		// commit either way
-		$this->commit();
+		$this->commit( __METHOD__ );
 		$this->freePrepared( $stmt );
 
 		return $res;
@@ -1320,10 +1327,10 @@ class DatabaseIbm_db2 extends DatabaseBase {
 
 		$res2 = parent::select( $table, $vars2, $conds, $fname, $options2,
 			$join_conds );
-		
+
 		$obj = $this->fetchObject( $res2 );
 		$this->mNumRows = $obj->num_rows;
-		
+
 		return new ResultWrapper( $this, new IBM_DB2Result( $this, $res, $obj->num_rows, $vars, $sql ) );
 	}
 
@@ -1371,7 +1378,7 @@ class DatabaseIbm_db2 extends DatabaseBase {
 	 * Returns link to IBM DB2 free download
 	 * @return String: wikitext of a link to the server software's web site
 	 */
-	public static function getSoftwareLink() {
+	public function getSoftwareLink() {
 		return '[http://www.ibm.com/db2/express/ IBM DB2]';
 	}
 
@@ -1412,7 +1419,7 @@ class DatabaseIbm_db2 extends DatabaseBase {
 		// db2_ping() doesn't exist
 		// Emulate
 		$this->close();
-		$this->mConn = $this->openUncataloged( $this->mDBName, $this->mUser,
+		$this->openUncataloged( $this->mDBName, $this->mUser,
 			$this->mPassword, $this->mServer, $this->mPort );
 
 		return false;
@@ -1420,14 +1427,6 @@ class DatabaseIbm_db2 extends DatabaseBase {
 	######################################
 	# Unimplemented and not applicable
 	######################################
-	/**
-	 * Not implemented
-	 * @return string $sql
-	 */
-	public function limitResultForUpdate( $sql, $num ) {
-		$this->installPrint( 'Not implemented for DB2: limitResultForUpdate()' );
-		return $sql;
-	}
 
 	/**
 	 * Only useful with fake prepare like in base Database class
@@ -1633,25 +1632,6 @@ SQL;
 			$this->installPrint( db2_stmt_errormsg() );
 		}
 		return $res;
-	}
-
-	/**
-	 * Prepare & execute an SQL statement, quoting and inserting arguments
-	 * in the appropriate places.
-	 * @param $query String
-	 * @param $args ...
-	 */
-	public function safeQuery( $query, $args = null ) {
-		// copied verbatim from Database.php
-		$prepared = $this->prepare( $query, 'DB2::safeQuery' );
-		if( !is_array( $args ) ) {
-			# Pull the var args
-			$args = func_get_args();
-			array_shift( $args );
-		}
-		$retval = $this->execute( $prepared, $args );
-		$this->freePrepared( $prepared );
-		return $retval;
 	}
 
 	/**

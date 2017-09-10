@@ -76,7 +76,7 @@ class LoginForm extends SpecialPage {
 	 * Loader
 	 */
 	function load() {
-		global $wgAuth, $wgHiddenPrefs, $wgEnableEmail, $wgRedirectOnLogin;
+		global $wgAuth, $wgHiddenPrefs, $wgEnableEmail;
 
 		if ( $this->mLoaded ) {
 			return;
@@ -95,8 +95,6 @@ class LoginForm extends SpecialPage {
 		$this->mRetype = $request->getText( 'wpRetype' );
 		$this->mDomain = $request->getText( 'wpDomain' );
 		$this->mReason = $request->getText( 'wpReason' );
-		$this->mReturnTo = $request->getVal( 'returnto' );
-		$this->mReturnToQuery = $request->getVal( 'returntoquery' );
 		$this->mCookieCheck = $request->getVal( 'wpCookieCheck' );
 		$this->mPosted = $request->wasPosted();
 		$this->mCreateaccount = $request->getCheck( 'wpCreateaccount' );
@@ -114,15 +112,8 @@ class LoginForm extends SpecialPage {
 		$this->mSkipCookieCheck = $request->getCheck( 'wpSkipCookieCheck' );
 		$this->mToken = ( $this->mType == 'signup' ) ? $request->getVal( 'wpCreateaccountToken' ) : $request->getVal( 'wpLoginToken' );
 
-		$this->wpBirthYear = $request->getVal( 'wpBirthYear' );
-		$this->wpBirthMonth = $request->getVal( 'wpBirthMonth' );
-		$this->wpBirthDay = $request->getVal( 'wpBirthDay' );
-		$this->wpUserBirthDay = strtotime( $this->wpBirthYear . '-' . $this->wpBirthMonth . '-' . $this->wpBirthDay );
-
-		if ( $wgRedirectOnLogin ) {
-			$this->mReturnTo = $wgRedirectOnLogin;
-			$this->mReturnToQuery = '';
-		}
+		$this->mReturnTo = $request->getVal( 'returnto', '' );
+		$this->mReturnToQuery = $request->getVal( 'returntoquery', '' );
 
 		if( $wgEnableEmail ) {
 			$this->mEmail = $request->getText( 'wpEmail' );
@@ -136,11 +127,7 @@ class LoginForm extends SpecialPage {
 		}
 
 		if( !$wgAuth->validDomain( $this->mDomain ) ) {
-			if ( isset( $_SESSION['wsDomain'] ) ) {
-				$this->mDomain = $_SESSION['wsDomain'];
-			} else {
-				$this->mDomain = 'invaliddomain';
-			}
+			$this->mDomain = $wgAuth->getDomain();
 		}
 		$wgAuth->setDomain( $this->mDomain );
 
@@ -184,9 +171,14 @@ class LoginForm extends SpecialPage {
 			return;
 		} elseif( $this->mPosted ) {
 			if( $this->mCreateaccount ) {
-				return $this->addNewAccount();
+				$this->addNewAccount();
+				return;
+			} elseif ( $this->mCreateaccountMail ) {
+				$this->addNewAccountMailPassword();
+				return;
 			} elseif ( ( 'submitlogin' == $this->mAction ) || $this->mLoginattempt ) {
-				return $this->processLogin();
+				$this->processLogin();
+				return;
 			}
 		}
 		$this->mainLoginForm( '' );
@@ -200,7 +192,7 @@ class LoginForm extends SpecialPage {
 
 		# Create the account and abort if there's a problem doing so
 		$u = $this->addNewAccountInternal();
-		if( ! $u  ) {
+		if( $u == null ) {
 			return false;
 		}
 
@@ -238,90 +230,30 @@ class LoginForm extends SpecialPage {
 			Hooks::run( 'AddNewAccount', array( $u, false ) );
 			$u->addNewUserLogEntry();
 			if( $this->hasSessionCookie() ) {
-				$ret = $this->successfulCreation();
-				Hooks::run( 'AddNewAccount2', array( $wgUser ) );
-				return $ret;
+				$this->successfulCreation();
 			} else {
-				return $this->cookieRedirectCheck( 'new' );
+				$this->cookieRedirectCheck( 'new' );
 			}
 		} else {
 			# Confirm that the account was created
 			$out->setPageTitle( $this->msg( 'accountcreated' ) );
 			$out->addWikiMsg( 'accountcreatedtext', $u->getName() );
-			$out->returnToMain( false, $this->getTitle() );
+			$out->addReturnTo( $this->getTitle() );
+
 			Hooks::run( 'AddNewAccount', array( $u, false ) );
+
 			$u->addNewUserLogEntry( false, $this->mReason );
-			return true;
 		}
-	}
-
-	/**
-	 * @private
-	 * clear code after 1.19 merge (MoLi)
-	 */
-	private function wikiaInternalCheck() {
-		global $wgExternalSharedDB;
-
-		$out = $this->getOutput();
-
-		//new registration - start [Marooned [at] wikia-inc.com]
-		if ($this->wpBirthYear == -1 || $this->wpBirthMonth == -1 || $this->wpBirthDay == -1) {
-			$this->mainLoginForm( $this->msg( $this->wpMsgPrefix . 'userlogin-bad-birthday' )->text(), 'error', 'birthday' );
-			return false;
-		}
-
-		if( $this->wpUserBirthDay > strtotime( '-13 years' ) ) {
-			$out->setPageTitle( $this->msg( 'userlogin-unable-title' ) );
-			$out->setRobotpolicy( 'noindex,nofollow' );
-			$out->setArticleRelated( false );
-			$out->addWikiText( $this->msg( $this->wpMsgPrefix . 'userlogin-unable-info' ) );
-			if ( !empty( $this->mReturnTo ) ) {
-				$out->returnToMain( true, $this->mReturnTo );
-			} else {
-				$out->returnToMain( true );
-			}
-			return false;
-		}
-
-		// check if username is in user_temp table (when new user login is disabled)
-		if ( empty( $this->wpUserLoginExt ) && !empty( $wgExternalSharedDB ) ) {
-			$username = User::getCanonicalName( $this->mUsername, 'valid' );
-			if ( $username != false ) {
-				$db = wfGetDB( DB_MASTER, array(), $wgExternalSharedDB );
-				$row = $db->selectRow(
-					array( 'user_temp' ),
-					array( 'user_name' ),
-					array( 'user_name' => $username ),
-					__METHOD__
-				);
-
-				if ( $row ) {
-					$this->mainLoginForm( $this->msg( $this->wpMsgPrefix . 'userexists' )->text(), 'error', 'username' );
-					return false;
-				}
-			}
-		}
-
 		return true;
 	}
 
 	/**
 	 * @private
-	 * Wikia change - add new param ($errParam) to function mainLoginForm()
-	 * Wikia change - add prefix to message key for User Login Ext
-	 *
-	 * @return bool|User User on success; false otherwise.
-	 *
-	 * @throws ReadOnlyError
-	 * @throws PermissionsError
+	 * @return bool|User
 	 */
 	function addNewAccountInternal() {
 		global $wgAuth, $wgMemc, $wgAccountCreationThrottle,
 			$wgMinimalPasswordLength, $wgEmailConfirmToEdit;
-
-		if ( !$this->wikiaInternalCheck() ) {
-			return false;
-		}
 
 		// If the user passes an invalid domain, something is fishy
 		if( !$wgAuth->validDomain( $this->mDomain ) ) {
@@ -382,7 +314,7 @@ class LoginForm extends SpecialPage {
 
 		$ip = $this->getRequest()->getIP();
 		if ( $currentUser->isDnsBlacklisted( $ip, true /* check $wgProxyWhitelist */ ) ) {
-			$this->mainLoginForm( $this->msg( 'sorbs_create_account_reason' )->text() . ' (' . htmlspecialchars( $ip ) . ')' );
+			$this->mainLoginForm( $this->msg( 'sorbs_create_account_reason' )->text() . ' ' . $this->msg( 'parentheses', $ip )->escaped() );
 			return false;
 		}
 
@@ -848,9 +780,9 @@ class LoginForm extends SpecialPage {
 					$this->getContext()->setLanguage( $userLang );
 					// Reset SessionID on Successful login (bug 40995)
 					$this->renewSessionId();
-					return $this->successfulLogin();
+					$this->successfulLogin();
 				} else {
-					return $this->cookieRedirectCheck( 'login' );
+					$this->cookieRedirectCheck( 'login' );
 				}
 				break;
 
@@ -870,7 +802,7 @@ class LoginForm extends SpecialPage {
 			case self::NOT_EXISTS:
 				if( $this->getUser()->isAllowed( 'createaccount' ) ) {
 					$this->mainLoginForm( $this->msg( 'nosuchuser',
-					   wfEscapeWikiText( $this->mUsername ) )->parse() );
+						wfEscapeWikiText( $this->mUsername ) )->parse() );
 				} else {
 					$this->mainLoginForm( $this->msg( 'nosuchusershort',
 						wfEscapeWikiText( $this->mUsername ) )->text() );
@@ -929,18 +861,7 @@ class LoginForm extends SpecialPage {
 		if( $injected_html !== '' ) {
 			$this->displaySuccessfulLogin( 'loginsuccess', $injected_html );
 		} else {
-			$titleObj = Title::newFromText( $this->mReturnTo );
-			if (  ( !$titleObj instanceof Title ) || ( $titleObj->isSpecial("Userlogout") ) || ( $titleObj->isSpecial("Signup") )   ) {
-				$titleObj = Title::newMainPage();
-				$this->getOutput()->redirect( $titleObj->getFullURL( "cb=".rand(1,10000) ) );
-				return true;
-			}
-			$redirectUrl = $titleObj->getFullURL( $this->mReturnToQuery . "&cb=".rand(1,10000) );
-			global $wgSecureLogin;
-			if( $wgSecureLogin && !$this->mStickHTTPS ) {
-				$redirectUrl = preg_replace( '/^https:/', 'http:', $redirectUrl );
-			}
-			$this->getOutput()->redirect( $redirectUrl );
+			$this->executeReturnTo( 'successredirect' );
 		}
 	}
 
@@ -970,6 +891,8 @@ class LoginForm extends SpecialPage {
 
 	/**
 	 * Display a "login successful" page.
+	 * @param $msgname string
+	 * @param $injected_html string
 	 */
 	private function displaySuccessfulLogin( $msgname, $injected_html ) {
 		$out = $this->getOutput();
@@ -980,11 +903,7 @@ class LoginForm extends SpecialPage {
 
 		$out->addHTML( $injected_html );
 
-		if ( !empty( $this->mReturnTo ) ) {
-			$out->returnToMain( null, $this->mReturnTo, $this->mReturnToQuery );
-		} else {
-			$out->returnToMain( null );
-		}
+		$this->executeReturnTo( 'success' );
 	}
 
 	/**
@@ -1018,7 +937,42 @@ class LoginForm extends SpecialPage {
 			$block->getByName()
 		);
 
-		$out->returnToMain( false );
+		$this->executeReturnTo( 'error' );
+	}
+
+	/**
+	 * Add a "return to" link or redirect to it.
+	 *
+	 * @param $type string, one of the following:
+	 *    - error: display a return to link ignoring $wgRedirectOnLogin
+	 *    - success: display a return to link using $wgRedirectOnLogin if needed
+	 *    - successredirect: send an HTTP redirect using $wgRedirectOnLogin if needed
+	 */
+	private function executeReturnTo( $type ) {
+		global $wgRedirectOnLogin, $wgSecureLogin;
+
+		if ( $type != 'error' && $wgRedirectOnLogin !== null ) {
+			$returnTo = $wgRedirectOnLogin;
+			$returnToQuery = array();
+		} else {
+			$returnTo = $this->mReturnTo;
+			$returnToQuery = wfCgiToArray( $this->mReturnToQuery );
+		}
+
+		$returnToTitle = Title::newFromText( $returnTo );
+		if ( !$returnToTitle ) {
+			$returnToTitle = Title::newMainPage();
+		}
+
+		if ( $type == 'successredirect' ) {
+			$redirectUrl = $returnToTitle->getFullURL( $returnToQuery );
+			if( $wgSecureLogin && !$this->mStickHTTPS ) {
+				$redirectUrl = preg_replace( '/^https:/', 'http:', $redirectUrl );
+			}
+			$this->getOutput()->redirect( $redirectUrl );
+		} else {
+			$this->getOutput()->addReturnTo( $returnToTitle, $returnToQuery );
+		}
 	}
 
 	/**
@@ -1075,9 +1029,9 @@ class LoginForm extends SpecialPage {
 			$linkmsg = 'nologin';
 		}
 
-		if ( !empty( $this->mReturnTo ) ) {
+		if ( $this->mReturnTo !== '' ) {
 			$returnto = '&returnto=' . wfUrlencode( $this->mReturnTo );
-			if ( !empty( $this->mReturnToQuery ) ) {
+			if ( $this->mReturnToQuery !== '' ) {
 				$returnto .= '&returntoquery=' .
 					wfUrlencode( $this->mReturnToQuery );
 			}
@@ -1285,12 +1239,13 @@ class LoginForm extends SpecialPage {
 	function cookieRedirectCheck( $type ) {
 		$titleObj = SpecialPage::getTitleFor( 'Userlogin' );
 		$query = array( 'wpCookieCheck' => $type );
-		if ( $this->mReturnTo ) {
+		if ( $this->mReturnTo !== '' ) {
 			$query['returnto'] = $this->mReturnTo;
+			$query['returntoquery'] = $this->mReturnToQuery;
 		}
 		$check = $titleObj->getFullURL( $query );
 
-		return $this->getOutput()->redirect( $check );
+		$this->getOutput()->redirect( $check );
 	}
 
 	/**
@@ -1299,15 +1254,15 @@ class LoginForm extends SpecialPage {
 	function onCookieRedirectCheck( $type ) {
 		if ( !$this->hasSessionCookie() ) {
 			if ( $type == 'new' ) {
-				return $this->mainLoginForm( $this->msg( 'nocookiesnew' )->parse() );
+				$this->mainLoginForm( $this->msg( 'nocookiesnew' )->parse() );
 			} elseif ( $type == 'login' ) {
-				return $this->mainLoginForm( $this->msg( 'nocookieslogin' )->parse() );
+				$this->mainLoginForm( $this->msg( 'nocookieslogin' )->parse() );
 			} else {
 				# shouldn't happen
-				return $this->mainLoginForm( $this->msg( 'error' )->text() );
+				$this->mainLoginForm( $this->msg( 'error' )->text() );
 			}
 		} else {
-			return $this->successfulLogin();
+			$this->successfulLogin();
 		}
 	}
 
@@ -1351,18 +1306,28 @@ class LoginForm extends SpecialPage {
 	 * @param $lang Language code
 	 */
 	function makeLanguageSelectorLink( $text, $lang ) {
-		$attr = array( 'uselang' => $lang );
+		if( $this->getLanguage()->getCode() == $lang ) {
+			// no link for currently used language
+			return htmlspecialchars( $text );
+		}
+		$query = array( 'uselang' => $lang );
 		if( $this->mType == 'signup' ) {
-			$attr['type'] = 'signup';
+			$query['type'] = 'signup';
 		}
-		if( $this->mReturnTo ) {
-			$attr['returnto'] = $this->mReturnTo;
+		if( $this->mReturnTo !== '' ) {
+			$query['returnto'] = $this->mReturnTo;
+			$query['returntoquery'] = $this->mReturnToQuery;
 		}
+
+		$attr = array();
+		$targetLanguage = Language::factory( $lang );
+		$attr['lang'] = $attr['hreflang'] = $targetLanguage->getHtmlCode();
+
 		return Linker::linkKnown(
 			$this->getTitle(),
 			htmlspecialchars( $text ),
-			array(),
-			$attr
+			$attr,
+			$query
 		);
 	}
 }

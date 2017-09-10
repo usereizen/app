@@ -116,31 +116,24 @@ span.texhtml {
 #wpTextbox1 {
 	clear: both;
 }
+
 #toolbar img {
 	cursor: pointer;
 }
-div#mw-js-message {
-	margin: 1em 5%;
-	padding: 0.5em 2.5%;
-	border: solid 1px #ddd;
-	background-color: #fcfcfc;
-}
 
 /* Edit section links */
-.editsection {
+/* Correct directionality when page dir is different from site/user dir */
+/* @noflip */
+.mw-content-ltr .editsection,
+.mw-content-rtl .mw-content-ltr .editsection {
 	float: right;
 	margin-left: 5px;
 }
-/* Correct directionality when page dir is different from site/user dir */
-.mw-content-ltr .editsection,
-.mw-content-rtl .mw-content-ltr .editsection {
-	/* @noflip */
-	float: right;
-}
+/* @noflip */
 .mw-content-rtl .editsection,
 .mw-content-ltr .mw-content-rtl .editsection {
-	/* @noflip */
 	float: left;
+	margin-right: 5px;
 }
 
 /**
@@ -259,16 +252,27 @@ tr.mw-htmlform-vertical-label td.mw-label {
 
 input#wpSummary {
 	width: 80%;
+	margin-bottom: 1em;
 }
 
 /**
  * Image captions
  */
-.thumbcaption {
+/* @noflip */
+.mw-content-ltr .thumbcaption {
 	text-align: left;
 }
-.magnify {
+/* @noflip */
+.mw-content-rtl .thumbcaption {
+	text-align: right;
+}
+/* @noflip */
+.mw-content-ltr .magnify {
 	float: right;
+}
+/* @noflip */
+.mw-content-rtl .magnify {
+	float: left;
 }
 
 /**
@@ -473,7 +477,7 @@ a.feedlink {
  * keep in sync with commonPrint.css
  */
 table.wikitable {
-	margin: 1em 1em 1em 0;
+	margin: 1em 0;
 	background-color: #f9f9f9;
 	border: 1px #aaa solid;
 	border-collapse: collapse;
@@ -752,7 +756,6 @@ table.mw_metadata ul.metadata-langlist {
 /* Don't forget to update commonPrint.css */
 li.gallerybox {
 	vertical-align: top;
-	border: solid 2px white;
 	display: -moz-inline-box;
 	display: inline-block;
 }
@@ -827,12 +830,13 @@ h1:lang(hi),
 h1:lang(kn),
 h1:lang(ml),
 h1:lang(mr),
+h1:lang(my),
 h1:lang(or),
 h1:lang(pa),
 h1:lang(sa),
 h1:lang(ta),
 h1:lang(te) {
-	line-height: 1.5em !important;
+	line-height: 1.6em !important;
 }
 h2:lang(as), h3:lang(as), h4:lang(as), h5:lang(as), h6:lang(as),
 h2:lang(bn), h3:lang(bn), h4:lang(bn), h5:lang(bn), h6:lang(bn),
@@ -841,6 +845,7 @@ h2:lang(hi), h3:lang(hi), h4:lang(hi), h5:lang(hi), h6:lang(hi),
 h2:lang(kn), h3:lang(kn), h4:lang(kn), h5:lang(kn), h6:lang(kn),
 h2:lang(ml), h3:lang(ml), h4:lang(ml), h5:lang(ml), h6:lang(ml),
 h2:lang(mr), h3:lang(mr), h4:lang(mr), h5:lang(mr), h6:lang(mr),
+h2:lang(my), h3:lang(my), h4:lang(my), h5:lang(my), h6:lang(my),
 h2:lang(or), h3:lang(or), h4:lang(or), h5:lang(or), h6:lang(or),
 h2:lang(pa), h3:lang(pa), h4:lang(pa), h5:lang(pa), h6:lang(pa),
 h2:lang(sa), h3:lang(sa), h4:lang(sa), h5:lang(sa), h6:lang(sa),
@@ -863,6 +868,12 @@ ol:lang(mzn) li {
 ol:lang(ckb) li {
 	list-style-type: -moz-arabic-indic;
 	list-style-type: arabic-indic;
+}
+
+ol:lang(hi) li,
+ol:lang(mr) li {
+	list-style-type: -moz-devanagari;
+	list-style-type: devanagari;
 }
 
 ol:lang(as) li,
@@ -1042,6 +1053,11 @@ table.floatleft {
 	overflow: hidden;
 	height: 0;
 	zoom: 1; /* http://webaim.org/techniques/skipnav/#iequirk */
+}
+
+/* Print footer should be hidden by default in screen. */
+.printfooter {
+	display: none;
 }
 
 /* For developpers */

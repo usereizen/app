@@ -1,5 +1,5 @@
 /* JavaScript for Special:RecentChanges */
-( function( $ ) {
+( function ( mw, $ ) {
 
 	var checkboxes = [ 'nsassociated', 'nsinvert' ];
 
@@ -57,17 +57,17 @@
 		 * Handler to disable/enable the namespace selector checkboxes when the
 		 * special 'all' namespace is selected/unselected respectively.
 		 */
-		updateCheckboxes: function() {
+		updateCheckboxes: function () {
 			// The option element for the 'all' namespace has an empty value
-			var isAllNS = ('' === $select.find('option:selected').val() );
+			var isAllNS = $select.find('option:selected').val() === '';
 
 			// Iterates over checkboxes and propagate the selected option
-			$.each( checkboxes, function( i, id ) {
+			$.each( checkboxes, function ( i, id ) {
 				$( '#' + id ).prop( 'disabled', isAllNS );
 			});
 		},
 
-		init: function() {
+		init: function () {
 			// Populate
 			$select = $( '#namespace' );
 
@@ -84,4 +84,4 @@
 	// Run when document is ready
 	$( rc.init );
 
-})( jQuery );
+}( mediaWiki, jQuery ) );

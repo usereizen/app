@@ -66,9 +66,9 @@ class CategoryPager extends AlphabeticPager {
 		$from = str_replace( ' ', '_', $from );
 		if( $from !== '' ) {
 			$from = Title::capitalize( $from, NS_CATEGORY );
-			$dbr = wfGetDB( DB_SLAVE );
-			$this->conds[] = 'cat_title >= ' . $dbr->addQuotes( $from );
-			$this->setOffset( '' );
+
+			$this->setOffset( $from );
+			$this->setIncludeOffset( true );
 		}
 	}
 

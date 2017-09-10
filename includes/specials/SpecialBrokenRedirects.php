@@ -27,7 +27,7 @@
  *
  * @ingroup SpecialPage
  */
-class BrokenRedirectsPage extends PageQueryPage {
+class BrokenRedirectsPage extends QueryPage {
 
 	function __construct( $name = 'BrokenRedirects' ) {
 		parent::__construct( $name );
@@ -44,37 +44,43 @@ class BrokenRedirectsPage extends PageQueryPage {
 	function getQueryInfo() {
 		$dbr = wfGetDB( DB_SLAVE );
 
-		return array(
-			'tables' => array(
+		return [
+			'tables' => [
 				'redirect',
 				'p1' => 'page',
 				'p2' => 'page',
-			),
-			'fields' => array(
-					'p1.page_namespace AS namespace',
-					'p1.page_title AS title',
-					'p1.page_title AS value',
-					'rd_namespace',
-					'rd_title'
-			),
-			'conds' => array(
+			],
+			'fields' => [
+				'namespace' => 'p1.page_namespace',
+				'title' => 'p1.page_title',
+				'value' => 'p1.page_title',
+				'rd_namespace',
+				'rd_title',
+			],
+			'conds' => [
 				// Exclude pages that don't exist locally as wiki pages,
 				// but aren't "broken" either.
 				// Special pages and interwiki links
 				'rd_namespace >= 0',
 				'rd_interwiki IS NULL OR rd_interwiki = ' . $dbr->addQuotes( '' ),
 				'p2.page_namespace IS NULL',
-			),
-			'join_conds' => array(
-				'p1' => array( 'JOIN', array(
-					'rd_from=p1.page_id',
-				) ),
-				'p2' => array( 'LEFT JOIN', array(
-					'rd_namespace=p2.page_namespace',
-					'rd_title=p2.page_title'
-				) ),
-			),
-		);
+			],
+			'join_conds' => [
+				'p1' => [
+					'JOIN',
+					[
+						'rd_from=p1.page_id',
+					],
+				],
+				'p2' => [
+					'LEFT JOIN',
+					[
+						'rd_namespace=p2.page_namespace',
+						'rd_title=p2.page_title',
+					],
+				],
+			],
+		];
 	}
 
 	/**
@@ -110,22 +116,22 @@ class BrokenRedirectsPage extends PageQueryPage {
 		$from = Linker::linkKnown(
 			$fromObj,
 			null,
-			array(),
-			array( 'redirect' => 'no' )
+			[],
+			[ 'redirect' => 'no' ]
 		);
-		$links = array();
+		$links = [];
 		$links[] = Linker::linkKnown(
 			$fromObj,
 			$this->msg( 'brokenredirects-edit' )->escaped(),
-			array(),
-			array( 'action' => 'edit' )
+			[],
+			[ 'action' => 'edit' ]
 		);
 		$to = Linker::link(
 			$toObj,
 			null,
-			array(),
-			array(),
-			array( 'broken' )
+			[],
+			[],
+			[ 'broken' ]
 		);
 		$arr = $this->getLanguage()->getArrow();
 

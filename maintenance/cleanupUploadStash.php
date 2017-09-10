@@ -25,8 +25,14 @@
  * @ingroup Maintenance
  */
 
-require_once( dirname( __FILE__ ) . '/Maintenance.php' );
+require_once( __DIR__ . '/Maintenance.php' );
 
+/**
+ * Maintenance script to remove old or broken uploads from temporary uploaded
+ * file storage and clean up associated database records.
+ *
+ * @ingroup Maintenance
+ */
 class UploadStashCleanup extends Maintenance {
 
 	public function __construct() {
@@ -67,7 +73,10 @@ class UploadStashCleanup extends Maintenance {
 		// UploadStash's own methods means it's less likely to fall accidentally
 		// out-of-date someday
 		$stash = new UploadStash( $repo );
+
+		$i = 0;
 		foreach( $keys as $key ) {
+			$i++;
 			try {
 				try {
 					$stash->getFile( $key, true );
@@ -82,8 +91,12 @@ class UploadStashCleanup extends Maintenance {
 			} catch ( UploadStashBadPathException $ex ) {
 				$this->output( "Failed removing stashed upload with key: $key\n"  );
 			}
+			if ( $i % 100 == 0 ) {
+				$this->output( "$i\n" );
+			}
 		}
-  	}
+		$this->output( "$i done\n" );
+	}
 }
 
 $maintClass = "UploadStashCleanup";

@@ -25,12 +25,18 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  * http://www.gnu.org/copyleft/gpl.html
  *
+ * @file
  * @ingroup Maintenance
  */
 define('REBUILD_LOCALISATION_CACHE_IN_PROGRESS', true);
 
 require_once( __DIR__ . '/Maintenance.php' );
 
+/**
+ * Maintenance script to rebuild the localisation cache.
+ *
+ * @ingroup Maintenance
+ */
 class RebuildLocalisationCache extends Maintenance {
 
 	public function __construct() {
@@ -38,6 +44,7 @@ class RebuildLocalisationCache extends Maintenance {
 		$this->mDescription = "Rebuild the localisation cache";
 		$this->addOption( 'force', 'Rebuild all files, even ones not out of date' );
 		$this->addOption( 'threads', 'Fork more than one thread', false, true );
+
 		// Wikia change begin
 		$this->addOption( 'cache-dir', 'Override the value of $wgCacheDirectory', false, true );
 		$this->addOption( 'primary', 'Only rebuild the Wikia supported languages', false, false, '-p' );
@@ -46,7 +53,10 @@ class RebuildLocalisationCache extends Maintenance {
 	}
 
 	public function memoryLimit() {
-		return '1024M';
+		if ( $this->hasOption( 'memory-limit' ) ) {
+			return parent::memoryLimit();
+		}
+		return '1000M';
 	}
 
 	public function execute() {
@@ -102,7 +112,7 @@ class RebuildLocalisationCache extends Maintenance {
 		$lc = new LocalisationCache_BulkLoad( $conf );
 
 		// Don't get all the language codes if --primary was given
-		$codes = $primaryOnly ? [] : array_keys( Language::getLanguageNames( true ) );
+		$codes = $primaryOnly ? [] : array_keys( Language::fetchLanguageNames( null, 'mwfile' ) );
 
 		// Define the list of Wikia supported language codes we should rebuild first
 		$firstCodes = [ 'en', 'pl', 'de', 'es', 'fr', 'it', 'ja', 'nl', 'pt', 'ru', 'zh-hans', 'zh-tw' ];

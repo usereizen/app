@@ -1,6 +1,22 @@
 <?php
 /**
- * Provide things related to namespaces
+ * Provide things related to namespaces.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * http://www.gnu.org/copyleft/gpl.html
+ *
  * @file
  */
 
@@ -14,7 +30,6 @@
  * Users and translators should not change them
  *
  */
-
 class MWNamespace {
 
 	/**
@@ -50,8 +65,14 @@ class MWNamespace {
 	 */
 	public static function isMovable( $index ) {
 		global $wgAllowImageMoving;
-		$result = !( $index < NS_MAIN || ($index == NS_FILE && !$wgAllowImageMoving)  || $index == NS_CATEGORY );
-		Hooks::run( 'MWNamespace:isMovable', array( &$result, $index ) );
+
+		$result = !( $index < NS_MAIN || ( $index == NS_FILE && !$wgAllowImageMoving )  || $index == NS_CATEGORY );
+
+		/**
+		 * @since 1.20
+		 */
+		Hooks::run( 'NamespaceIsMovable', [ $index, &$result ] );
+
 		return $result;
 	}
 
@@ -317,6 +338,33 @@ class MWNamespace {
 			return $wgContentNamespaces;
 		}
 	}
+
+	/**
+	 * List all namespace indices which are considered subject, aka not a talk
+	 * or special namespace. See also MWNamespace::isSubject
+	 *
+	 * @return array of namespace indices
+	 */
+	public static function getSubjectNamespaces() {
+		return array_filter(
+			MWNamespace::getValidNamespaces(),
+			'MWNamespace::isSubject'
+		);
+	}
+
+	/**
+	 * List all namespace indices which are considered talks, aka not a subject
+	 * or special namespace. See also MWNamespace::isTalk
+	 *
+	 * @return array of namespace indices
+	 */
+	public static function getTalkNamespaces() {
+		return array_filter(
+			MWNamespace::getValidNamespaces(),
+			'MWNamespace::isTalk'
+		);
+	}
+
 	/**
 	 * Is the namespace first-letter capitalized?
 	 *
@@ -423,5 +471,17 @@ class MWNamespace {
 		}
 
 		return $usableLevels;
+	}
+
+	/**
+	 * It is not possible to use pages from this namespace as template?
+	 *
+	 * @since 1.20
+	 * @param $index int Index to check
+	 * @return bool
+	 */
+	public static function isNonincludable( $index ) {
+		global $wgNonincludableNamespaces;
+		return $wgNonincludableNamespaces && in_array( $index, $wgNonincludableNamespaces );
 	}
 }

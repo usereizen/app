@@ -84,7 +84,7 @@ class LogPage {
 	}
 
 	/**
-	 * @return bool|int|null
+	 * @return int log_id of the inserted log entry
 	 */
 	protected function saveContent() {
 		global $wgLogRestrictions;
@@ -102,7 +102,7 @@ class LogPage {
 			'log_user_text' => $this->doer->getName(),
 			'log_namespace' => $this->target->getNamespace(),
 			'log_title' => $this->target->getDBkey(),
-			'log_page' => $this->target->getArticleId(),
+			'log_page' => $this->target->getArticleID(),
 			'log_comment' => $this->comment,
 			'log_params' => $this->params
 		);
@@ -121,7 +121,7 @@ class LogPage {
 		} elseif( $this->sendToUDP ) {
 			# Don't send private logs to UDP
 			if( isset( $wgLogRestrictions[$this->type] ) && $wgLogRestrictions[$this->type] != '*' ) {
-				return true;
+				return $newId;
 			}
 
 			# Notify external application via UDP.
@@ -149,7 +149,8 @@ class LogPage {
 			if ( $rcComment == '' ) {
 				$rcComment = $this->comment;
 			} else {
-				$rcComment .= wfMsgForContent( 'colon-separator' ) . $this->comment;
+				$rcComment .= wfMessage( 'colon-separator' )->inContentLanguage()->text() .
+					$this->comment;
 			}
 		}
 
@@ -168,7 +169,8 @@ class LogPage {
 			if ( $rcComment == '' ) {
 				$rcComment = $this->comment;
 			} else {
-				$rcComment .= wfMsgForContent( 'colon-separator' ) . $this->comment;
+				$rcComment .= wfMessage( 'colon-separator' )->inContentLanguage()->text() .
+					$this->comment;
 			}
 		}
 
@@ -214,7 +216,7 @@ class LogPage {
 		global $wgLogNames;
 
 		if( isset( $wgLogNames[$type] ) ) {
-			return str_replace( '_', ' ', wfMsg( $wgLogNames[$type] ) );
+			return str_replace( '_', ' ', wfMessage( $wgLogNames[$type] )->text() );
 		} else {
 			// Bogus log types? Perhaps an extension was removed.
 			return $type;
@@ -232,7 +234,7 @@ class LogPage {
 	public static function logHeader( $type ) {
 		wfDeprecated( __METHOD__, '1.19' );
 		global $wgLogHeaders;
-		return wfMsgExt( $wgLogHeaders[$type], array( 'parseinline' ) );
+		return wfMessage( $wgLogHeaders[$type] )->parse();
 	}
 
 	/**
@@ -265,17 +267,20 @@ class LogPage {
 
 		if( isset( $wgLogActions[$key] ) ) {
 			if( is_null( $title ) ) {
-				$rv = wfMsgExt( $wgLogActions[$key], array( 'parsemag', 'escape', 'language' => $langObj ) );
+				$rv = wfMessage( $wgLogActions[$key] )->inLanguage( $langObj )->escaped();
 			} else {
 				$titleLink = self::getTitleLink( $type, $langObjOrNull, $title, $params );
 
 				if( preg_match( '/^rights\/(rights|autopromote)/', $key ) ) {
-					$rightsnone = wfMsgExt( 'rightsnone', array( 'parsemag', 'language' => $langObj ) );
+					$rightsnone = wfMessage( 'rightsnone' )->inLanguage( $langObj )->text();
 
 					if( $skin ) {
+						$username = $title->getText();
 						foreach ( $params as &$param ) {
 							$groupArray = array_map( 'trim', explode( ',', $param ) );
-							$groupArray = array_map( array( 'User', 'getGroupMember' ), $groupArray );
+							foreach( $groupArray as &$group ) {
+								$group = User::getGroupMember( $group, $username );
+							}
 							$param = $wgLang->listToText( $groupArray );
 						}
 					}
@@ -290,7 +295,7 @@ class LogPage {
 				}
 
 				if( count( $params ) == 0 ) {
-					$rv = wfMsgExt( $wgLogActions[$key], array( 'parsemag', 'escape', 'replaceafter', 'language' => $langObj ), $titleLink );
+					$rv = wfMessage( $wgLogActions[$key] )->rawParams( $titleLink )->inLanguage( $langObj )->escaped();
 				} else {
 					$details = '';
 					array_unshift( $params, $titleLink );
@@ -317,11 +322,11 @@ class LogPage {
 
 						// Cascading flag...
 						if( $params[2] ) {
-							$details .= ' [' . wfMsgExt( 'protect-summary-cascade', array( 'parsemag', 'language' => $langObj ) ) . ']';
+							$details .= ' [' . wfMessage( 'protect-summary-cascade' )->inLanguage( $langObj )->text() . ']';
 						}
 					}
 
-					$rv = wfMsgExt( $wgLogActions[$key], array( 'parsemag', 'escape', 'replaceafter', 'language' => $langObj ), $params ) . $details;
+					$rv = wfMessage( $wgLogActions[$key] )->rawParams( $params )->inLanguage( $langObj )->escaped() . $details;
 				}
 			}
 		} else {
@@ -434,7 +439,12 @@ class LogPage {
 
 					# Use the language name for log titles, rather than Log/X
 					if( $name == 'Log' ) {
-						$titleLink = '(' . Linker::link( $title, LogPage::logName( $par ) ) . ')';
+						$logPage = new LogPage( $par );
+						$titleLink = Linker::link( $title, $logPage->getName()->escaped() );
+						$titleLink = wfMessage( 'parentheses' )
+							->inLanguage( $lang )
+							->rawParams( $titleLink )
+							->escaped();
 					} else {
 						$titleLink = Linker::link( $title );
 					}
@@ -449,14 +459,13 @@ class LogPage {
 	/**
 	 * Add a log entry
 	 *
-	 * @param String $action One of '', 'block', 'protect', 'rights', 'delete', 'upload', 'move', 'move_redir'
-	 * @param Title $target
-	 * @param String $comment Description associated
-	 * @param array $params Parameters passed later to wfMsg.* functions
-	 * @param int|User $doer The user doing the action
+	 * @param $action String: one of '', 'block', 'protect', 'rights', 'delete', 'upload', 'move', 'move_redir'
+	 * @param $target Title object
+	 * @param $comment String: description associated
+	 * @param $params Array: parameters passed later to wfMessage function
+	 * @param $doer User object: the user doing the action
 	 *
-	 * @return bool|int|null
-	 * @TODO: make this use LogEntry::saveContent()
+	 * @return int log_id of the inserted log entry
 	 */
 	public function addEntry( $action, $target, $comment, $params = array(), $doer = null ) {
 		global $wgContLang;
@@ -575,10 +584,11 @@ class LogPage {
 		}
 
 		if ( !empty( $flags ) ) {
-			return wfMessage( 'parentheses' )->inLanguage( $lang )->rawParams( $flags )->escaped();
-		} else {
-			return '';
+			return wfMessage( 'parentheses' )->inLanguage( $lang )
+				->rawParams( $lang->commaList( $flags ) )->escaped();
 		}
+
+		return '';
 	}
 
 	/**

@@ -194,8 +194,8 @@
 		return ( /input|select|textarea|button|object/.test( nodeName )
 			? !element.disabled
 			: "a" == nodeName
-			? element.href || isTabIndexNotNaN
-			: isTabIndexNotNaN)
+				? element.href || isTabIndexNotNaN
+				: isTabIndexNotNaN)
 			// the element and all of its ancestors must be visible
 			&& visible( element );
 	}

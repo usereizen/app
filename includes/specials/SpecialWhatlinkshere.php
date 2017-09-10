@@ -163,7 +163,7 @@ class SpecialWhatLinksHere extends SpecialPage {
 			'rd_from = page_id',
 			'rd_namespace' => $target->getNamespace(),
 			'rd_title' => $target->getDBkey(),
-			'(rd_interwiki is NULL) or (rd_interwiki = \'\')'
+			'rd_interwiki = ' . $dbr->addQuotes( '' ) . ' OR rd_interwiki IS NULL'
 		)));
 
 		// hook by Wikia, Bartek Lapinski 30.03.2009, for videos and stuff
@@ -330,12 +330,12 @@ class SpecialWhatLinksHere extends SpecialPage {
 			$props[] = $msgcache['isimage'];
 
 		if ( count( $props ) ) {
-			$propsText = '(' . implode( $msgcache['semicolon-separator'], $props ) . ')';
+			$propsText = $this->msg( 'parentheses' )->rawParams( implode( $msgcache['semicolon-separator'], $props ) )->escaped();
 		}
 
 		# Space for utilities links, with a what-links-here link provided
 		$wlhLink = $this->wlhLink( $nt, $msgcache['whatlinkshere-links'] );
-		$wlh = Xml::wrapClass( "($wlhLink)", 'mw-whatlinkshere-tools' );
+		$wlh = Xml::wrapClass( $this->msg( 'parentheses' )->rawParams( $wlhLink )->escaped(), 'mw-whatlinkshere-tools' );
 
 		return $notClose ?
 			Xml::openElement( 'li' ) . "$link $propsText $dirmark $wlh\n" :
@@ -427,8 +427,17 @@ class SpecialWhatLinksHere extends SpecialPage {
 		$f .= ' ';
 
 		# Namespace selector
-		$f .= Xml::label( wfMsg( 'namespace' ), 'namespace' ) . '&#160;' .
-			Xml::namespaceSelector( $namespace, '' );
+		$f .= Html::namespaceSelector(
+			array(
+				'selected' => $namespace,
+				'all' => '',
+				'label' => $this->msg( 'namespace' )->text()
+			), array(
+				'name'  => 'namespace',
+				'id'    => 'namespace',
+				'class' => 'namespaceselector',
+			)
+		);
 
 		$f .= ' ';
 
@@ -459,7 +468,7 @@ class SpecialWhatLinksHere extends SpecialPage {
 			$types[] = 'hideimages';
 
 		// Combined message keys: 'whatlinkshere-hideredirs', 'whatlinkshere-hidetrans', 'whatlinkshere-hidelinks', 'whatlinkshere-hideimages'
-		// To be sure they will be find by grep
+		// To be sure they will be found by grep
 		foreach( $types as $type ) {
 			$chosen = $this->opts->getValue( $type );
 			$msg = $chosen ? $show : $hide;

@@ -105,12 +105,12 @@
 		 * @constructor
 		 * @param {Object|string} uri URI string, or an Object with appropriate properties (especially another URI object to clone).
 		 * Object must have non-blank 'protocol', 'host', and 'path' properties.
-		 *  This parameter is optional. If omitted (or set to undefined, null or empty string), then an object will be created
-		 *  for the default uri of this constructor (e.g. document.location for mw.Uri in MediaWiki core).
-		 * @param {Object|boolean} Object with options, or (backwards compatibility) a boolean for strictMode
-		 *  - {boolean} strictMode Trigger strict mode parsing of the url. Default: false
-		 *  - {boolean} overrideKeys Wether to let duplicate query parameters override eachother (true) or automagically
-		 *     convert to an array (false, default).
+		 * This parameter is optional. If omitted (or set to undefined, null or empty string), then an object will be created
+		 * for the default uri of this constructor (e.g. document.location for mw.Uri in MediaWiki core).
+		 * @param {Object|Boolean} Object with options, or (backwards compatibility) a boolean for strictMode
+		 * - strictMode {Boolean} Trigger strict mode parsing of the url. Default: false
+		 * - overrideKeys {Boolean} Wether to let duplicate query parameters override eachother (true) or automagically
+		 *   convert to an array (false, default).
 		 */
 		function Uri( uri, options ) {
 			options = typeof options === 'object' ? options : { strictMode: !!options };
@@ -158,7 +158,7 @@
 			}
 			if ( this.path && this.path.charAt( 0 ) !== '/' ) {
 				// A real relative URL, relative to defaultUri.path. We can't really handle that since we cannot
-				// figure out whether the last path component of defaultUri.path is a directory or a file.
+				// figure out whether the last path compoennt of defaultUri.path is a directory or a file.
 				throw new Error( 'Bad constructor arguments' );
 			}
 			if ( !( this.protocol && this.host && this.path ) ) {
@@ -201,7 +201,7 @@
 					uri = this,
 					matches = parser[ options.strictMode ? 'strict' : 'loose' ].exec( str );
 				$.each( properties, function ( i, property ) {
-					uri[ property ] = matches[ i + 1 ];
+					uri[ property ] = matches[ i+1 ];
 				} );
 
 				// uri.query starts out as the query string; we will parse it into key-val pairs then make
@@ -210,7 +210,7 @@
 				q = {};
 				// using replace to iterate over a string
 				if ( uri.query ) {
-					uri.query.replace( /(?:^|&)([^&=]*)(?:(=)([^&]*))?/g, function ( $0, $1, $2, $3 ) {
+					uri.query.replace( /(?:^|&)([^&=]*)(?:(=)([^&]*))?/g, function ($0, $1, $2, $3) {
 						var k, v;
 						if ( $1 ) {
 							k = Uri.decode( $1 );
@@ -274,13 +274,7 @@
 					var k = Uri.encode( key ),
 						vals = $.isArray( val ) ? val : [ val ];
 					$.each( vals, function ( i, v ) {
-						if ( v === null ) {
-							args.push( k );
-						} else if ( k === 'title' ) {
-							args.push( k + '=' + mw.util.wikiUrlencode( v ) );
-						} else {
-							args.push( k + '=' + Uri.encode( v ) );
-						}
+						args.push( k + ( v === null ? '' : '=' + Uri.encode( v ) ) );
 					} );
 				} );
 				return args.join( '&' );

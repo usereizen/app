@@ -1,9 +1,16 @@
 <?php
-
 /**
- * API for MediaWiki 1.8+
+ * This file is the entry point for all API queries.
  *
- * Copyright (C) 2006 Yuri Astrakhan <Firstname><Lastname>@gmail.com
+ * It begins by checking whether the API is enabled on this wiki; if not,
+ * it informs the user that s/he should set $wgEnableAPI to true and exits.
+ * Otherwise, it constructs a new ApiMain using the parameter passed to it
+ * as an argument in the URL ('?action=') and with write-enabled set to the
+ * value of $wgEnableWriteAPI as specified in LocalSettings.php.
+ * It then invokes "execute()" on the ApiMain object instance, which
+ * produces output in the format sepecified in the URL.
+ *
+ * Copyright © 2006 Yuri Astrakhan <Firstname><Lastname>@gmail.com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,31 +30,21 @@
  * @file
  */
 
-/**
- * This file is the entry point for all API queries. It begins by checking
- * whether the API is enabled on this wiki; if not, it informs the user that
- * s/he should set $wgEnableAPI to true and exits. Otherwise, it constructs
- * a new ApiMain using the parameter passed to it as an argument in the URL
- * ('?action=') and with write-enabled set to the value of $wgEnableWriteAPI
- * as specified in LocalSettings.php. It then invokes "execute()" on the
- * ApiMain object instance, which produces output in the format sepecified
- * in the URL.
- */
-
 // So extensions (and other code) can check whether they're running in API mode
 define( 'MW_API', true );
 
 // Bail if PHP is too low
-if ( !function_exists( 'version_compare' ) || version_compare( phpversion(), '5.2.3' ) < 0 ) {
+if ( !function_exists( 'version_compare' ) || version_compare( phpversion(), '5.3.2' ) < 0 ) {
+	// We need to use dirname( __FILE__ ) here cause __DIR__ is PHP5.3+
 	require( dirname( __FILE__ ) . '/includes/PHPVersionError.php' );
 	wfPHPVersionError( 'api.php' );
 }
 
 // Initialise common code.
 if ( isset( $_SERVER['MW_COMPILED'] ) ) {
-	require ( 'phase3/includes/WebStart.php' );
+	require ( 'core/includes/WebStart.php' );
 } else {
-	require ( dirname( __FILE__ ) . '/includes/WebStart.php' );
+	require ( __DIR__ . '/includes/WebStart.php' );
 }
 
 Transaction::setEntryPoint(Transaction::ENTRY_POINT_API);
@@ -74,8 +71,8 @@ if ( !$wgEnableAPI ) {
 wfHandleCrossSiteAJAXdomain(); // Wikia change
 
 // Wikia change
-if( function_exists( 'newrelic_background_job' ) ) {
-	newrelic_background_job(true);
+if ( function_exists( 'newrelic_background_job' ) ) {
+	newrelic_background_job( true );
 }
 
 // Set a dummy $wgTitle, because $wgTitle == null breaks various things
@@ -89,7 +86,8 @@ $wgTitle = Title::makeTitle( NS_MAIN, 'API' );
 if ( !empty( $wgVisualEditorSyncval ) && !empty( $_GET['syncval'] ) && $wgVisualEditorSyncval === $_GET['syncval'] ) {
 	$wgGroupPermissions['*']['read'] = true;
 }
-$processor = new ApiMain( $wgRequest, $wgEnableWriteAPI );
+
+$processor = new ApiMain( RequestContext::getMain(), $wgEnableWriteAPI );
 
 // Process data & print results
 $processor->execute();

@@ -286,19 +286,16 @@ class RequestContext implements IContextSource {
 	 * @since 1.19
 	 */
 	public function getLanguage() {
-		/**
-		 * The following block of code (between if and elseif) has been added in
-		 * order to force setting $this->lang to some value. Apparently there was
-		 * something wrong with the following block (the one inside elseif) that would
-		 * cause an infinite loop or other issues.
-		 */
-		if ( $this->recursion > 0 ) {
-			$this->recursion++;
+		if ( isset( $this->recursion ) ) {
+			trigger_error( "Recursion detected in " . __METHOD__, E_USER_WARNING );
+			$e = new Exception;
+			wfDebugLog( 'recursion-guard', "Recursion detected:\n" . $e->getTraceAsString() );
+
 			global $wgLanguageCode;
 			$code = ( $wgLanguageCode ) ? $wgLanguageCode : 'en';
 			$this->lang = Language::factory( $code );
 		} elseif ( $this->lang === null ) {
-			$this->recursion++;
+			$this->recursion = true;
 
 			global $wgLanguageCode, $wgContLang;
 
@@ -308,7 +305,7 @@ class RequestContext implements IContextSource {
 			$code = $request->getVal( 'uselang', $user->getGlobalPreference( 'language' ) );
 			$code = self::sanitizeLangCode( $code );
 
-			Hooks::run( 'UserGetLanguageObject', array( $user, &$code, $this ) );
+			Hooks::run( 'UserGetLanguageObject', [ $user, &$code, $this ] );
 
 			if( $code === $wgLanguageCode ) {
 				$this->lang = $wgContLang;
@@ -317,7 +314,7 @@ class RequestContext implements IContextSource {
 				$this->lang = $obj;
 			}
 
-			$this->recursion = 0;
+			unset( $this->recursion );
 		}
 
 		return $this->lang;

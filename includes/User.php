@@ -1,6 +1,6 @@
 <?php
 /**
- * Implements the User class for the %MediaWiki software.
+ * Implements the User class for the MediaWiki software.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -102,6 +102,11 @@ class User implements JsonSerializable {
 	private static $PROPERTY_UPSERT_SET_BLOCK = [ "up_user = VALUES(up_user)", "up_property = VALUES(up_property)", "up_value = VALUES(up_value)" ];
 
 	/**
+	 * Maximum items in $mWatchedItems
+	 */
+	const MAX_WATCHED_ITEMS_CACHE = 100;
+
+	/**
 	 * Array of Strings List of member variables which are saved to the
 	 * shared cache (memcached). Any operation which changes the
 	 * corresponding database fields must call a cache-clearing function.
@@ -127,7 +132,7 @@ class User implements JsonSerializable {
 		'mOptionOverrides',
 	);
 
-	/** @name Cache variables */
+	// Cache variables
 	//@{
 	var $mId, $mName, $mRealName,
 		$mEmail, $mToken, $mEmailAuthenticated,
@@ -186,6 +191,11 @@ class User implements JsonSerializable {
 	 * @var Block
 	 */
 	private $mBlockedFromCreateAccount = false;
+
+	/**
+	 * @var Array
+	 */
+	private $mWatchedItems = array();
 
 	static $idCacheByName = array();
 
@@ -582,8 +592,7 @@ class User implements JsonSerializable {
 	 * @return String|false The corresponding username
 	 */
 	public static function whoIs( $id ) {
-		$dbr = wfGetDB( DB_SLAVE );
-		return $dbr->selectField( 'user', 'user_name', array( 'user_id' => $id ), __METHOD__ );
+		return UserCache::singleton()->getProp( $id, 'name' );
 	}
 
 	/**
@@ -593,8 +602,7 @@ class User implements JsonSerializable {
 	 * @return String|false The corresponding user's real name
 	 */
 	public static function whoIsReal( $id ) {
-		$dbr = wfGetDB( DB_SLAVE );
-		return $dbr->selectField( 'user', 'user_real_name', array( 'user_id' => $id ), __METHOD__ );
+		return UserCache::singleton()->getProp( $id, 'real_name' );
 	}
 
 	/**
@@ -651,7 +659,7 @@ class User implements JsonSerializable {
 	 * as 300.300.300.300 will return true because it looks like an IP
 	 * address, despite not being strictly valid.
 	 *
-	 * We match \d{1,3}\.\d{1,3}\.\d{1,3}\.xxx as an anonymous IP
+	 * We match "\d{1,3}\.\d{1,3}\.\d{1,3}\.xxx" as an anonymous IP
 	 * address because the usemod software would "cloak" anonymous IP
 	 * addresses like this, if we allowed accounts like this to be created
 	 * new users could get the old edits of these anonymous users.
@@ -745,7 +753,7 @@ class User implements JsonSerializable {
 		// Certain names may be reserved for batch processes.
 		foreach ( $reservedUsernames as $reserved ) {
 			if ( substr( $reserved, 0, 4 ) == 'msg:' ) {
-				$reserved = wfMsgForContent( substr( $reserved, 4 ) );
+				$reserved = wfMessage( substr( $reserved, 4 ) )->inContentLanguage()->text();
 			}
 			if ( $reserved == $name ) {
 				return false;
@@ -997,6 +1005,7 @@ class User implements JsonSerializable {
 	 */
 	public static function randomPassword() {
 		global $wgMinimalPasswordLength;
+
 		// Decide the final password length based on our min password length, stopping at a minimum of 20 chars
 		$length = max( 20, $wgMinimalPasswordLength );
 		// Multiply by 1.25 to get the number of hex characters we need
@@ -1074,25 +1083,6 @@ class User implements JsonSerializable {
 	}
 
 	/**
-	 * A comparison of two strings, not vulnerable to timing attacks
-	 * @param string $answer the secret string that you are comparing against.
-	 * @param string $test compare this string to the $answer.
-	 * @return bool True if the strings are the same, false otherwise
-	 */
-	protected function compareSecrets( $answer, $test ) {
-		if ( strlen( $answer ) !== strlen( $test ) ) {
-			$passwordCorrect = false;
-		} else {
-			$result = 0;
-			for ( $i = 0; $i < strlen( $answer ); $i++ ) {
-				$result |= ord( $answer{$i} ) ^ ord( $test{$i} );
-			}
-			$passwordCorrect = ( $result == 0 );
-		}
-		return $passwordCorrect;
-	}
-
-	/**
 	 * Load user and user_group data from the database.
 	 * $this->mId must be set, this is how the user is identified.
 	 *
@@ -1109,12 +1099,8 @@ class User implements JsonSerializable {
 		}
 
 		$dbr = wfGetDB( DB_MASTER );
-		if ( !is_object( $dbr ) ) {
-			$this->loadDefaults();
-			return false;
-		}
+		$s = $dbr->selectRow( 'user', self::selectFields(), array( 'user_id' => $this->mId ), __METHOD__ );
 
-		$s = $dbr->selectRow( 'user', '*', array( 'user_id' => $this->mId ), __METHOD__ );
 		Hooks::run( 'UserLoadFromDatabase', array( $this, &$s ) );
 
 		if ( $s !== false ) {
@@ -1326,7 +1312,7 @@ class User implements JsonSerializable {
 		}
 
 		# User/IP blocking
-		$block = Block::newFromTarget( $this->getName(), $ip, !$bFromSlave );
+		$block = Block::newFromTarget( $this, $ip, !$bFromSlave );
 
 		# Proxy blocking
 		if ( !$block instanceof Block && $ip !== null && !$this->isAllowed( 'proxyunbannable' )
@@ -1335,13 +1321,13 @@ class User implements JsonSerializable {
 			# Local list
 			if ( self::isLocallyBlockedProxy( $ip ) ) {
 				$block = new Block;
-				$block->setBlocker( wfMsg( 'proxyblocker' ) );
-				$block->mReason = wfMsg( 'proxyblockreason' );
+				$block->setBlocker( wfMessage( 'proxyblocker' )->text() );
+				$block->mReason = wfMessage( 'proxyblockreason' )->text();
 				$block->setTarget( $ip );
 			} elseif ( $this->isAnon() && $this->isDnsBlacklisted( $ip ) ) {
 				$block = new Block;
-				$block->setBlocker( wfMsg( 'sorbs' ) );
-				$block->mReason = wfMsg( 'sorbsreason' );
+				$block->setBlocker( wfMessage( 'sorbs' )->text() );
+				$block->mReason = wfMessage( 'sorbsreason' )->text();
 				$block->setTarget( $ip );
 			}
 		}
@@ -1440,11 +1426,11 @@ class User implements JsonSerializable {
 				$ipList = gethostbynamel( $host );
 
 				if( $ipList ) {
-					wfDebug( "Hostname $host is {$ipList[0]}, it's a proxy says $base!\n" );
+					wfDebugLog( 'dnsblacklist', "Hostname $host is {$ipList[0]}, it's a proxy says $base!\n" );
 					$found = true;
 					break;
 				} else {
-					wfDebug( "Requested $host, not found in $base.\n" );
+					wfDebugLog( 'dnsblacklist', "Requested $host, not found in $base.\n" );
 				}
 			}
 		}
@@ -1580,7 +1566,7 @@ class User implements JsonSerializable {
 			$count = $wgMemc->get( $key );
 			// Already pinged?
 			if( $count ) {
-				if( $count > $max ) {
+				if( $count >= $max ) {
 					wfDebug( __METHOD__ . ": tripped! $key at $count $summary\n" );
 					if( $wgRateLimitLog ) {
 						wfSuppressWarnings();
@@ -1915,12 +1901,17 @@ class User implements JsonSerializable {
 	 * Add or update the new messages flag
 	 * @param $field String 'user_ip' for anonymous users, 'user_id' otherwise
 	 * @param $id String|Int User's IP address for anonymous users, User ID otherwise
+	 * @param $curRev Revision new, as yet unseen revision of the user talk page. Ignored if null.
 	 * @return Bool True if successful, false otherwise
 	 */
-	protected function updateNewtalk( $field, $id ) {
+	protected function updateNewtalk( $field, $id, $curRev = null ) {
+		// Get timestamp of the talk page revision prior to the current one
+		$prevRev = $curRev ? $curRev->getPrevious() : false;
+		$ts = $prevRev ? $prevRev->getTimestamp() : null;
+		// Mark the user as having new messages since this revision
 		$dbw = wfGetDB( DB_MASTER );
 		$dbw->insert( 'user_newtalk',
-			array( $field => $id ),
+			array( $field => $id, 'user_last_timestamp' => $dbw->timestampOrNull( $ts ) ),
 			__METHOD__,
 			'IGNORE' );
 		if ( $dbw->affectedRows() ) {
@@ -1955,8 +1946,9 @@ class User implements JsonSerializable {
 	/**
 	 * Update the 'You have new messages!' status.
 	 * @param $val Bool Whether the user has new messages
+	 * @param $curRev Revision new, as yet unseen revision of the user talk page. Ignored if null or !$val.
 	 */
-	public function setNewtalk( $val ) {
+	public function setNewtalk( $val, $curRev = null ) {
 		if( wfReadOnly() ) {
 			return;
 		}
@@ -1973,7 +1965,7 @@ class User implements JsonSerializable {
 		}
 
 		if( $val ) {
-			$changed = $this->updateNewtalk( $field, $id );
+			$changed = $this->updateNewtalk( $field, $id, $curRev );
 		} else {
 			$changed = $this->deleteNewtalk( $field, $id );
 		}
@@ -2285,6 +2277,42 @@ class User implements JsonSerializable {
 		/* Wikia change end */
 
 		Hooks::run( 'UserSetEmail', array( $this, &$this->mEmail ) );
+	}
+
+	/**
+	 * Set the user's e-mail address and a confirmation mail if needed.
+	 *
+	 * @since 1.20
+	 * @param $str String New e-mail address
+	 * @return Status
+	 */
+	public function setEmailWithConfirmation( $str ) {
+		global $wgEnableEmail, $wgEmailAuthentication;
+
+		if ( !$wgEnableEmail ) {
+			return Status::newFatal( 'emaildisabled' );
+		}
+
+		$oldaddr = $this->getEmail();
+		if ( $str === $oldaddr ) {
+			return Status::newGood( true );
+		}
+
+		$this->setEmail( $str );
+
+		if ( $str !== '' && $wgEmailAuthentication ) {
+			# Send a confirmation request to the new address if needed
+			$type = $oldaddr != '' ? 'changed' : 'set';
+			$result = $this->sendConfirmationMail( $type );
+			if ( $result->isGood() ) {
+				# Say the the caller that a confirmation mail has been sent
+				$result->value = 'eauth';
+			}
+		} else {
+			$result = Status::newGood( true );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -2903,13 +2931,33 @@ class User implements JsonSerializable {
 	}
 
 	/**
+	 * Get a WatchedItem for this user and $title.
+	 *
+	 * @param $title Title
+	 * @return WatchedItem
+	 */
+	public function getWatchedItem( $title ) {
+		$key = $title->getNamespace() . ':' . $title->getDBkey();
+
+		if ( isset( $this->mWatchedItems[$key] ) ) {
+			return $this->mWatchedItems[$key];
+		}
+
+		if ( count( $this->mWatchedItems ) >= self::MAX_WATCHED_ITEMS_CACHE ) {
+			$this->mWatchedItems = array();
+		}
+
+		$this->mWatchedItems[$key] = WatchedItem::fromUserTitle( $this, $title );
+		return $this->mWatchedItems[$key];
+	}
+
+	/**
 	 * Check the watched status of an article.
 	 * @param $title Title of the article to look at
 	 * @return Bool
 	 */
 	public function isWatched( $title ) {
-		$wl = WatchedItem::fromUserTitle( $this, $title );
-		return $wl->isWatched();
+		return $this->getWatchedItem( $title )->isWatched();
 	}
 
 	/**
@@ -2917,8 +2965,7 @@ class User implements JsonSerializable {
 	 * @param $title Title of the article to look at
 	 */
 	public function addWatch( $title ) {
-		$wl = WatchedItem::fromUserTitle( $this, $title );
-		$wl->addWatch();
+		$this->getWatchedItem( $title )->addWatch();
 		$this->invalidateCache();
 	}
 
@@ -2927,8 +2974,7 @@ class User implements JsonSerializable {
 	 * @param $title Title of the article to look at
 	 */
 	public function removeWatch( $title ) {
-		$wl = WatchedItem::fromUserTitle( $this, $title );
-		$wl->removeWatch();
+		$this->getWatchedItem( $title )->removeWatch();
 		$this->invalidateCache();
 	}
 
@@ -3192,6 +3238,8 @@ class User implements JsonSerializable {
 	 * @todo Only rarely do all these fields need to be set!
 	 */
 	public function saveSettings() {
+		global $wgAuth;
+
 		$this->load();
 		if ( wfReadOnly() ) {
 			return;
@@ -3201,6 +3249,9 @@ class User implements JsonSerializable {
 		}
 
 		$this->mTouched = self::newTouchedTimestamp();
+		if ( !$wgAuth->allowSetLocalPassword() ) {
+			$this->mPassword = '';
+		}
 
 		Hooks::run( 'BeforeUserSaveSettings', array( $this ) );
 
@@ -3290,6 +3341,7 @@ class User implements JsonSerializable {
 			'user_registration' => $dbw->timestamp( $user->mRegistration ),
 			'user_birthdate' => $user->mBirthDate, // Wikia. Added to reflect our user table layout.
 			'user_editcount' => 0,
+			'user_touched' => $dbw->timestamp( self::newTouchedTimestamp() ),
 		);
 		foreach ( $params as $name => $value ) {
 			$fields["user_$name"] = $value;
@@ -3315,6 +3367,9 @@ class User implements JsonSerializable {
 	 */
 	public function addToDatabase() {
 		$this->load();
+
+		$this->mTouched = self::newTouchedTimestamp();
+
 		$dbw = wfGetDB( DB_MASTER );
 		$seqVal = $dbw->nextSequenceValue( 'user_user_id_seq' );
 		$dbw->insert( 'user',
@@ -3328,6 +3383,7 @@ class User implements JsonSerializable {
 				'user_registration' => $dbw->timestamp( $this->mRegistration ),
 				'user_birthdate' => $this->mBirthDate, // Wikia. Added to reflect our user table layout.
 				'user_editcount' => 0,
+				'user_touched' => $dbw->timestamp( $this->mTouched ),
 			), __METHOD__
 		);
 		$this->mId = $dbw->insertId();
@@ -3494,7 +3550,7 @@ class User implements JsonSerializable {
 	/**
 	 * Check to see if the given clear-text password is one of the accepted passwords
 	 * @param $password String: user password.
-	 * @return Boolean: True if the given password is correct, otherwise False.
+	 * @return AuthResult
 	 */
 	public function checkPassword( $password, &$errorMessageKey = null ) {
 		$this->load();
@@ -3564,6 +3620,17 @@ class User implements JsonSerializable {
 			}
 			return md5( $token . $salt ) . EDIT_TOKEN_SUFFIX;
 		}
+	}
+
+	/**
+	 * Generate a looking random token for various uses.
+	 *
+	 * @param $salt String Optional salt value
+	 * @return String The new random token
+	 * @deprecated since 1.20; Use MWCryptRand for secure purposes or wfRandomString for pesudo-randomness
+	 */
+	public static function generateToken( $salt = '' ) {
+		return MWCryptRand::generateHex( 32 );
 	}
 
 	/**
@@ -3868,7 +3935,7 @@ class User implements JsonSerializable {
 	 * @return String New token URL
 	 */
 	private function invalidationTokenUrl( $token ) {
-		return $this->getTokenUrl( 'Invalidateemail', $token );
+		return $this->getTokenUrl( 'InvalidateEmail', $token );
 	}
 
 	/**
@@ -4079,6 +4146,92 @@ class User implements JsonSerializable {
 	}
 
 	/**
+	 * Get the description of a given right
+	 *
+	 * @param $right String Right to query
+	 * @return String Localized description of the right
+	 */
+	public static function getRightDescription( $right ) {
+		$key = "right-$right";
+		$msg = wfMessage( $key );
+		return $msg->isBlank() ? $right : $msg->text();
+	}
+
+	/**
+	 * Make an old-style password hash
+	 *
+	 * @param $password String Plain-text password
+	 * @param $userId String User ID
+	 * @return String Password hash
+	 */
+	public static function oldCrypt( $password, $userId ) {
+		global $wgPasswordSalt;
+		if ( $wgPasswordSalt ) {
+			return md5( $userId . '-' . md5( $password ) );
+		} else {
+			return md5( $password );
+		}
+	}
+
+	/**
+	 * Make a new-style password hash
+	 *
+	 * @param $password String Plain-text password
+	 * @param bool|string $salt Optional salt, may be random or the user ID.
+
+	 *                     If unspecified or false, will generate one automatically
+	 * @return String Password hash
+	 */
+	public static function crypt( $password, $salt = false ) {
+		global $wgPasswordSalt;
+
+		$hash = '';
+		if( !wfRunHooks( 'UserCryptPassword', array( &$password, &$salt, &$wgPasswordSalt, &$hash ) ) ) {
+			return $hash;
+		}
+
+		if( $wgPasswordSalt ) {
+			if ( $salt === false ) {
+				$salt = MWCryptRand::generateHex( 8 );
+			}
+			return ':B:' . $salt . ':' . md5( $salt . '-' . md5( $password ) );
+		} else {
+			return ':A:' . md5( $password );
+		}
+	}
+
+	/**
+	 * Compare a password hash with a plain-text password. Requires the user
+	 * ID if there's a chance that the hash is an old-style hash.
+	 *
+	 * @param $hash String Password hash
+	 * @param $password String Plain-text password to compare
+	 * @param $userId String|bool User ID for old-style password salt
+	 *
+	 * @return Boolean
+	 */
+	public static function comparePasswords( $hash, $password, $userId = false ) {
+		$type = substr( $hash, 0, 3 );
+
+		$result = false;
+		if( !wfRunHooks( 'UserComparePasswords', array( &$hash, &$password, &$userId, &$result ) ) ) {
+			return $result;
+		}
+
+		if ( $type == ':A:' ) {
+			# Unsalted
+			return md5( $password ) === substr( $hash, 3 );
+		} elseif ( $type == ':B:' ) {
+			# Salted
+			list( $salt, $realHash ) = explode( ':', substr( $hash, 3 ), 2 );
+			return md5( $salt.'-'.md5( $password ) ) === $realHash;
+		} else {
+			# Old-style
+			return self::oldCrypt( $password, $userId ) === $hash;
+		}
+	}
+
+	/**
 	 * Add a newuser log entry for this user. Before 1.19 the return value was always true.
 	 *
 	 * @param $byEmail Boolean: account made by email?
@@ -4098,10 +4251,10 @@ class User implements JsonSerializable {
 			$action = 'create2';
 			if ( $byEmail ) {
 				if ( $reason === '' ) {
-					$reason = wfMsgForContent( 'newuserlog-byemail' );
+					$reason = wfMessage( 'newuserlog-byemail' )->inContentLanguage()->text();
 				} else {
 					$reason = $wgContLang->commaList( array(
-						$reason, wfMsgForContent( 'newuserlog-byemail' ) ) );
+						$reason, wfMessage( 'newuserlog-byemail' )->inContentLanguage()->text() ) );
 				}
 			}
 		}
@@ -4126,7 +4279,7 @@ class User implements JsonSerializable {
 			return true; // disabled
 		}
 		$log = new LogPage( 'newusers', false );
-		$log->addEntry( 'autocreate', $this->getUserPage(), '', array( $this->getId() ) );
+		$log->addEntry( 'autocreate', $this->getUserPage(), '', array( $this->getId() ), $this );
 		return true;
 	}
 
@@ -4161,7 +4314,7 @@ class User implements JsonSerializable {
 
 			$res = $dbr->select(
 				'user_properties',
-				'*',
+				array( 'up_property', 'up_value' ),
 				array( 'up_user' => $this->getId() ),
 				__METHOD__
 			);
@@ -4200,9 +4353,8 @@ class User implements JsonSerializable {
 	protected function saveOptions() {
 		global $wgAllowPrefChange;
 
-		$extuser = ExternalUser::newFromUser( $this );
-
 		$this->loadOptions();
+
 		// wikia change
 		global $wgExternalSharedDB, $wgSharedDB;
 		if( isset( $wgSharedDB ) ) {
@@ -4214,6 +4366,7 @@ class User implements JsonSerializable {
 
 		$insertRows = $deletePrefs = [];
 
+		// Not using getOptions(), to keep hidden preferences in database
 		$saveOptions = $this->mOptions;
 
 		// Allow hooks to abort, for instance to save to a global profile.
@@ -4222,6 +4375,9 @@ class User implements JsonSerializable {
 			return;
 		}
 
+		$extuser = ExternalUser::newFromUser( $this );
+		$userId = $this->getId();
+		$insert_rows = array();
 		foreach( $saveOptions as $key => $value ) {
 			# Don't bother storing default values
 			# <Wikia>
@@ -4245,11 +4401,10 @@ class User implements JsonSerializable {
 
 		// user has default set, so clear any other entries from db
 		if (!empty($deletePrefs)) {
-			(new WikiaSQL())
-				->DELETE('user_properties')
-				->WHERE('up_user')->EQUAL_TO($this->getId())
-					->AND_('up_property')->IN($deletePrefs)
-				->run($dbw);
+			( new WikiaSQL() )->DELETE( 'user_properties' )
+				->WHERE( 'up_user' )->EQUAL_TO( $this->getId() )
+				->AND_( 'up_property' )->IN( $deletePrefs )
+				->run( $dbw );
 		}
 
 		$dbw->upsert('user_properties', $insertRows, [], self::$PROPERTY_UPSERT_SET_BLOCK, __METHOD__);
@@ -4331,8 +4486,8 @@ class User implements JsonSerializable {
 		/*
 		if ( $wgMinimalPasswordLength > 1 ) {
 			$ret['pattern'] = '.{' . intval( $wgMinimalPasswordLength ) . ',}';
-			$ret['title'] = wfMsgExt( 'passwordtooshort', 'parsemag',
-				$wgMinimalPasswordLength );
+			$ret['title'] = wfMessage( 'passwordtooshort' )
+				->numParams( $wgMinimalPasswordLength )->text();
 		}
 		*/
 
@@ -4653,19 +4808,6 @@ class User implements JsonSerializable {
 	}
 
 	/**
-	 * Get the description of a given right
-	 *
-	 * @param $right String Right to query
-	 * @return String Localized description of the right
-	 */
-	public static function getRightDescription( $right ) {
-		$key = "right-$right";
-		$msg = wfMessage( $key );
-		return $msg->isBlank() ? $right : $msg->text();
-	}
-
-
-	/**
 	 * We want to use one source for username.
 	 * This function will perform the lookup if
 	 * $wgEnableUsernameLookup is true
@@ -4716,5 +4858,29 @@ class User implements JsonSerializable {
 			'mId' => $this->mId,
 			'mName' => $this->mName,
 		];
+	}
+
+	/**
+	 * Return the list of user fields that should be selected to create
+	 * a new user object.
+	 * @return array
+	 */
+	public static function selectFields() {
+		return array(
+			'user_id',
+			'user_name',
+			'user_real_name',
+			'user_password',
+			'user_newpassword',
+			'user_newpass_time',
+			'user_email',
+			'user_touched',
+			'user_token',
+			'user_email_authenticated',
+			'user_email_token',
+			'user_email_token_expires',
+			'user_registration',
+			'user_editcount',
+		);
 	}
 }

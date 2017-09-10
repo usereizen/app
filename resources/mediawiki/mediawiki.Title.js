@@ -398,7 +398,6 @@
 	 */
 	Title.exist = {
 		pages: {},
-
 		set: function ( titles, state ) {
 			titles = $.isArray( titles ) ? titles : [titles];
 			state = state === undefined ? true : !!state;

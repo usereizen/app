@@ -72,7 +72,7 @@ function ImagePlaceholderParserShouldAddTrackingCategory( Parser $parser, Title 
 
 // this function is to bypass the default MW parameter handling, because it assumes we have an actual file on the way
 // it passes $params array by reference to be used later
-function ImagePlaceholderBeforeParserMakeImageLinkObjOptions( Parser $parser, Title $title, $parts, &$params, $time, $descQuery, $options ) {
+function ImagePlaceholderBeforeParserMakeImageLinkObjOptions( Parser $parser, Title $title, $parts, &$params, $descQuery, $options ) {
 	// we have to ready the parameters and then fire up makeLink, heh
 	// other way parameters are mangled
 

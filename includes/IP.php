@@ -199,6 +199,49 @@ class IP {
 	}
 
 	/**
+	 * Prettify an IP for display to end users.
+	 * This will make it more compact and lower-case.
+	 *
+	 * @param $ip string
+	 * @return string
+	 */
+	public static function prettifyIP( $ip ) {
+		$ip = self::sanitizeIP( $ip ); // normalize (removes '::')
+		if ( self::isIPv6( $ip ) ) {
+			// Split IP into an address and a CIDR
+			if ( strpos( $ip, '/' ) !== false ) {
+				list( $ip, $cidr ) = explode( '/', $ip, 2 );
+			} else {
+				list( $ip, $cidr ) = array( $ip, '' );
+			}
+			// Get the largest slice of words with multiple zeros
+			$offset = 0;
+			$longest = $longestPos = false;
+			while ( preg_match(
+				'!(?:^|:)0(?::0)+(?:$|:)!', $ip, $m, PREG_OFFSET_CAPTURE, $offset
+			) ) {
+				list( $match, $pos ) = $m[0]; // full match
+				if ( strlen( $match ) > strlen( $longest ) ) {
+					$longest = $match;
+					$longestPos = $pos;
+				}
+				$offset += ( $pos + strlen( $match ) ); // advance
+			}
+			if ( $longest !== false ) {
+				// Replace this portion of the string with the '::' abbreviation
+				$ip = substr_replace( $ip, '::', $longestPos, strlen( $longest ) );
+			}
+			// Add any CIDR back on
+			if ( $cidr !== '' ) {
+				$ip = "{$ip}/{$cidr}";
+			}
+			// Convert to lower case to make it more readable
+			$ip = strtolower( $ip );
+		}
+		return $ip;
+	}
+
+	/**
 	 * Given a host/port string, like one might find in the host part of a URL
 	 * per RFC 2732, split the hostname part and the port part and return an
 	 * array with an element for each. If there is no port part, the array will
@@ -692,6 +735,7 @@ class IP {
 	 * @return String: valid dotted quad IPv4 address or null
 	 */
 	public static function canonicalize( $addr ) {
+		$addr = preg_replace( '/\%.*/','', $addr ); // remove zone info (bug 35738)
 		if ( self::isValid( $addr ) ) {
 			return $addr;
 		}

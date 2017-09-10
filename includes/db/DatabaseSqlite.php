@@ -3,6 +3,21 @@
  * This is the SQLite database abstraction layer.
  * See maintenance/sqlite/README for development notes and other specific information
  *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * http://www.gnu.org/copyleft/gpl.html
+ *
  * @file
  * @ingroup Database
  */
@@ -115,16 +130,11 @@ class DatabaseSqlite extends DatabaseBase {
 	}
 
 	/**
-	 * Close an SQLite database
-	 *
+	 * Does not actually close the connection, just destroys the reference for GC to do its work
 	 * @return bool
 	 */
-	function close() {
-		$this->mOpened = false;
-		if ( is_object( $this->mConn ) ) {
-			if ( $this->trxLevel() ) $this->commit();
-			$this->mConn = null;
-		}
+	protected function closeConnection() {
+		$this->mConn = null;
 		return true;
 	}
 
@@ -166,7 +176,7 @@ class DatabaseSqlite extends DatabaseBase {
 		}
 		$cachedResult = false;
 		$table = 'dummy_search_test';
-		
+
 		$db = new DatabaseSqliteStandalone( ':memory:' );
 
 		if ( $db->query( "CREATE VIRTUAL TABLE $table USING FTS3(dummy_field)", __METHOD__, true ) ) {
@@ -303,7 +313,7 @@ class DatabaseSqlite extends DatabaseBase {
 
 	/**
 	 * @param $res ResultWrapper
-	 * @param $n 
+	 * @param $n
 	 * @return bool
 	 */
 	function fieldName( $res, $n ) {
@@ -347,7 +357,8 @@ class DatabaseSqlite extends DatabaseBase {
 	 * @return int
 	 */
 	function insertId() {
-		return $this->mConn->lastInsertId();
+		// PDO::lastInsertId yields a string :(
+		return intval( $this->mConn->lastInsertId() );
 	}
 
 	/**
@@ -610,7 +621,7 @@ class DatabaseSqlite extends DatabaseBase {
 	 * @return string User-friendly database information
 	 */
 	public function getServerInfo() {
-		return wfMsg( self::getFulltextSearchModule() ? 'sqlite-has-fts' : 'sqlite-no-fts', $this->getServerVersion() );
+		return wfMessage( self::getFulltextSearchModule() ? 'sqlite-has-fts' : 'sqlite-no-fts', $this->getServerVersion() )->text();
 	}
 
 	/**
@@ -631,15 +642,15 @@ class DatabaseSqlite extends DatabaseBase {
 		return false;
 	}
 
-	function begin( $fname = '' ) {
+	protected function doBegin( $fname = '' ) {
 		if ( $this->mTrxLevel == 1 ) {
-			$this->commit();
+			$this->commit( __METHOD__ );
 		}
 		$this->mConn->beginTransaction();
 		$this->mTrxLevel = 1;
 	}
 
-	function commit( $fname = '' ) {
+	protected function doCommit( $fname = '' ) {
 		if ( $this->mTrxLevel == 0 ) {
 			return;
 		}
@@ -647,21 +658,12 @@ class DatabaseSqlite extends DatabaseBase {
 		$this->mTrxLevel = 0;
 	}
 
-	function rollback( $fname = '' ) {
+	protected function doRollback( $fname = '' ) {
 		if ( $this->mTrxLevel == 0 ) {
 			return;
 		}
 		$this->mConn->rollBack();
 		$this->mTrxLevel = 0;
-	}
-
-	/**
-	 * @param  $sql
-	 * @param  $num
-	 * @return string
-	 */
-	function limitResultForUpdate( $sql, $num ) {
-		return $this->limitResult( $sql, $num );
 	}
 
 	/**
@@ -812,8 +814,8 @@ class DatabaseSqlite extends DatabaseBase {
 		}
 		return $this->query( $sql, $fname );
 	}
-	
-	
+
+
 	/**
 	 * List all tables on the database
 	 *
@@ -828,21 +830,21 @@ class DatabaseSqlite extends DatabaseBase {
 			'name',
 			"type='table'"
 		);
-		
+
 		$endArray = array();
-		
-		foreach( $result as $table ) {	
+
+		foreach( $result as $table ) {
 			$vars = get_object_vars($table);
 			$table = array_pop( $vars );
-			
+
 			if( !$prefix || strpos( $table, $prefix ) === 0 ) {
 				if ( strpos( $table, 'sqlite_' ) !== 0 ) {
 					$endArray[] = $table;
 				}
-				
+
 			}
 		}
-		
+
 		return $endArray;
 	}
 

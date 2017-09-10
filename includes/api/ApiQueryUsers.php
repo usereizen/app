@@ -4,7 +4,7 @@
  *
  * Created on July 30, 2007
  *
- * Copyright © 2007 Roan Kattouw <Firstname>.<Lastname>@gmail.com
+ * Copyright © 2007 Roan Kattouw "<Firstname>.<Lastname>@gmail.com"
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,10 +61,10 @@ class ApiQueryUsers extends ApiQueryBase {
 		return $this->tokenFunctions;
 	}
 
-	 /**
-	  * @param $user User
-	  * @return String
-	  */
+	/**
+	 * @param $user User
+	 * @return String
+	 */
 	public static function getUserrightsToken( $user ) {
 		global $wgUser;
 		// Since the permissions check for userrights is non-trivial,
@@ -149,7 +149,7 @@ class ApiQueryUsers extends ApiQueryBase {
 				}
 
 				if ( isset( $this->prop['implicitgroups'] ) && !isset( $data[$name]['implicitgroups'] ) ) {
-					$data[$name]['implicitgroups'] =  self::getAutoGroups( $user );
+					$data[$name]['implicitgroups'] =  $user->getAutomaticGroups();
 				}
 
 				if ( isset( $this->prop['rights'] ) ) {
@@ -280,18 +280,15 @@ class ApiQueryUsers extends ApiQueryBase {
 
 	/**
 	* Gets all the groups that a user is automatically a member of (implicit groups)
+	*
+	* @deprecated since 1.20; call User::getAutomaticGroups() directly.
 	* @param $user User
 	* @return array
 	*/
 	public static function getAutoGroups( $user ) {
-		$groups = array();
-		$groups[] = '*';
+		wfDeprecated( __METHOD__, '1.20' );
 
-		if ( !$user->isAnon() ) {
-			$groups[] = 'user';
-		}
-
-		return array_merge( $groups, Autopromote::getAutopromoteGroups( $user ) );
+		return $user->getAutomaticGroups();
 	}
 
 	public function getCacheMode( $params ) {
@@ -349,6 +346,73 @@ class ApiQueryUsers extends ApiQueryBase {
 			'ids' => 'A list of user IDs to obtain the same information for',
 			'token' => 'Which tokens to obtain for each user',
 		);
+	}
+
+	public function getResultProperties() {
+		$props = array(
+			'' => array(
+				'userid' => array(
+					ApiBase::PROP_TYPE => 'integer',
+					ApiBase::PROP_NULLABLE => true
+				),
+				'name' => 'string',
+				'invalid' => 'boolean',
+				'hidden' => 'boolean',
+				'interwiki' => 'boolean',
+				'missing' => 'boolean'
+			),
+			'editcount' => array(
+				'editcount' => array(
+					ApiBase::PROP_TYPE => 'integer',
+					ApiBase::PROP_NULLABLE => true
+				)
+			),
+			'registration' => array(
+				'registration' => array(
+					ApiBase::PROP_TYPE => 'timestamp',
+					ApiBase::PROP_NULLABLE => true
+				)
+			),
+			'blockinfo' => array(
+				'blockid' => array(
+					ApiBase::PROP_TYPE => 'integer',
+					ApiBase::PROP_NULLABLE => true
+				),
+				'blockedby' => array(
+					ApiBase::PROP_TYPE => 'string',
+					ApiBase::PROP_NULLABLE => true
+				),
+				'blockedbyid' => array(
+					ApiBase::PROP_TYPE => 'integer',
+					ApiBase::PROP_NULLABLE => true
+				),
+				'blockedreason' => array(
+					ApiBase::PROP_TYPE => 'string',
+					ApiBase::PROP_NULLABLE => true
+				),
+				'blockedexpiry' => array(
+					ApiBase::PROP_TYPE => 'timestamp',
+					ApiBase::PROP_NULLABLE => true
+				)
+			),
+			'emailable' => array(
+				'emailable' => 'boolean'
+			),
+			'gender' => array(
+				'gender' => array(
+					ApiBase::PROP_TYPE => array(
+						'male',
+						'female',
+						'unknown'
+					),
+					ApiBase::PROP_NULLABLE => true
+				)
+			)
+		);
+
+		self::addTokenProperties( $props, $this->getTokenFunctions() );
+
+		return $props;
 	}
 
 	public function getDescription() {

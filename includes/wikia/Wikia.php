@@ -52,7 +52,7 @@ $wgHooks['LocalFileExecuteUrls']     []  = 'Wikia::onLocalFileExecuteUrls';
 $wgHooks['ParserCacheGetETag']       [] = 'Wikia::onParserCacheGetETag';
 
 # Add X-Served-By and X-Backend-Response-Time response headers - BAC-550
-$wgHooks['BeforeSendCacheControl']    [] = 'Wikia::onBeforeSendCacheControl';
+$wgHooks['AfterFinalPageOutput']    [] = 'Wikia::onAfterFinalPageOutput';
 $wgHooks['ResourceLoaderAfterRespond'][] = 'Wikia::onResourceLoaderAfterRespond';
 $wgHooks['NirvanaAfterRespond']       [] = 'Wikia::onNirvanaAfterRespond';
 $wgHooks['ApiMainBeforeSendCacheHeaders'][] = 'Wikia::onApiMainBeforeSendCacheHeaders';
@@ -1815,11 +1815,10 @@ class Wikia {
 	 * See BAC-550 for details
 	 *
 	 * @param OutputPage $out
-	 * @param Skin $sk
 	 * @return bool
 	 * @author macbre
 	 */
-	static function onBeforeSendCacheControl(OutputPage $out) {
+	static function onAfterFinalPageOutput( OutputPage $out ) {
 		self::addExtraHeaders( $out->getRequest()->response() );
 		return true;
 	}
