@@ -417,7 +417,6 @@ class Interwiki {
 		return array(
 			'iw_prefix',
 			'iw_url',
-			'iw_wikiid',
 			'iw_local',
 			'iw_trans'
 		);
