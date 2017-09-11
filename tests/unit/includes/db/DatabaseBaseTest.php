@@ -27,6 +27,9 @@ class DatabaseBaseTester extends DatabaseBase {
 	function getServerVersion() {}
 	function getServerInfo() {}
 
+	protected  function closeConnection() {
+		// no-op, this is some stub
+	}
 }
 
 class DatabaseBaseTest extends \PHPUnit\Framework\TestCase {
