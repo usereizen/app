@@ -12,12 +12,8 @@ $dir = dirname(__FILE__) . '/';
  * classes
  */
 $wgAutoloadClasses['WikiaSpecialVersion'] =  $dir . 'WikiaSpecialVersion.class.php';
-$wgAutoloadClasses['WikiaSpecialVersionController'] =  $dir . 'WikiaSpecialVersionController.class.php';
 
-/**
- * special pages
- */
-$wgSpecialPages['Version'] = 'WikiaSpecialVersionController';
+$wgHooks['SoftwareInfo'][] = 'WikiaSpecialVersion::onSoftwareInfo';
 
 /**
  * message files
