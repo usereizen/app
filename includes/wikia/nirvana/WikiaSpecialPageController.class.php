@@ -93,6 +93,11 @@ class WikiaSpecialPageController extends WikiaController {
 		}
 	}
 
+	// MW 1.20 compat HACK
+	public function run( $subPage ) {
+		$this->execute( $subPage );
+	}
+
 	/**
 	 * This method is used to manually set varnish caching on special pages.
 	 * Special pages are sent through OutputPage, and headers set in the request are ignored.
