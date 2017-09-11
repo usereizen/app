@@ -840,7 +840,6 @@ var mw = ( function ( $, undefined ) {
 							execute( m );
 						}
 					}
-					throw e;
 				}
 			}
 
