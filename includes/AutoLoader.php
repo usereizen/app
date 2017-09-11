@@ -797,6 +797,8 @@ $wgAutoloadLocalClasses = array(
 	'ResourceLoaderUserOptionsModule' => 'includes/resourceloader/ResourceLoaderUserOptionsModule.php',
 	'ResourceLoaderUserTokensModule' => 'includes/resourceloader/ResourceLoaderUserTokensModule.php',
 	'ResourceLoaderLanguageDataModule' => 'includes/resourceloader/ResourceLoaderLanguageDataModule.php',
+	// Wikia change - register module backported for VE
+	'ResourceLoaderLanguageNamesModule' => 'includes/resourceloader/ResourceLoaderLanguageNamesModule.php',
 	'ResourceLoaderWikiModule' => 'includes/resourceloader/ResourceLoaderWikiModule.php',
 
 	# includes/revisiondelete
