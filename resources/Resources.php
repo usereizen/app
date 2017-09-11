@@ -662,25 +662,26 @@ return array(
 
 	/* MediaWiki Language */
 
+	/* Wikia change begin - use backported modules from src subdirectory for VE */
 	'mediawiki.language' => array(
 		'scripts' => array(
 			'resources/src/mediawiki.language/mediawiki.language.js',
 			'resources/src/mediawiki.language/mediawiki.language.numbers.js'
 		),
 		'languageScripts' => array(
-			'bs' => 'resources/mediawiki.language/languages/bs.js',
-			'dsb' => 'resources/mediawiki.language/languages/dsb.js',
-			'fi' => 'resources/mediawiki.language/languages/fi.js',
-			'ga' => 'resources/mediawiki.language/languages/ga.js',
-			'he' => 'resources/mediawiki.language/languages/he.js',
-			'hsb' => 'resources/mediawiki.language/languages/hsb.js',
-			'hu' => 'resources/mediawiki.language/languages/hu.js',
-			'hy' => 'resources/mediawiki.language/languages/hy.js',
-			'la' => 'resources/mediawiki.language/languages/la.js',
-			'os' => 'resources/mediawiki.language/languages/os.js',
-			'ru' => 'resources/mediawiki.language/languages/ru.js',
-			'sl' => 'resources/mediawiki.language/languages/sl.js',
-			'uk' => 'resources/mediawiki.language/languages/uk.js',
+			'bs' => 'resources/src/mediawiki.language/languages/bs.js',
+			'dsb' => 'resources/src/mediawiki.language/languages/dsb.js',
+			'fi' => 'resources/src/mediawiki.language/languages/fi.js',
+			'ga' => 'resources/src/mediawiki.language/languages/ga.js',
+			'he' => 'resources/src/mediawiki.language/languages/he.js',
+			'hsb' => 'resources/src/mediawiki.language/languages/hsb.js',
+			'hu' => 'resources/src/mediawiki.language/languages/hu.js',
+			'hy' => 'resources/src/mediawiki.language/languages/hy.js',
+			'la' => 'resources/src/mediawiki.language/languages/la.js',
+			'os' => 'resources/src/mediawiki.language/languages/os.js',
+			'ru' => 'resources/src/mediawiki.language/languages/ru.js',
+			'sl' => 'resources/src/mediawiki.language/languages/sl.js',
+			'uk' => 'resources/src/mediawiki.language/languages/uk.js',
 		),
 		'dependencies' => array(
 				'mediawiki.language.data',
@@ -689,29 +690,41 @@ return array(
 	),
 
 	'mediawiki.cldr' => array(
-		'scripts' => 'resources/mediawiki.language/mediawiki.cldr.js',
+		'scripts' => 'resources/src/mediawiki.language/mediawiki.cldr.js',
 		'dependencies' => array(
 			'mediawiki.libs.pluralruleparser',
 		),
 	),
 
 	'mediawiki.libs.pluralruleparser' => array(
-		'scripts' => 'resources/mediawiki.libs/CLDRPluralRuleParser.js',
+		'scripts' => 'resources/src/mediawiki.libs/CLDRPluralRuleParser.js',
 	),
 
 	'mediawiki.language.init' => array(
-		'scripts' => 'resources/mediawiki.language/mediawiki.language.init.js',
+		'scripts' => 'resources/src/mediawiki.language/mediawiki.language.init.js',
 	),
 
 	'mediawiki.jqueryMsg' => array(
-		'scripts' => 'resources/mediawiki/mediawiki.jqueryMsg.js',
+		'scripts' => 'resources/src/mediawiki/mediawiki.jqueryMsg.js',
 		'dependencies' => array(
 			'mediawiki.util',
 			'mediawiki.language',
 		),
 	),
 
+	'mediawiki.language.months' => array(
+		'scripts' => 'resources/src/mediawiki.language/mediawiki.language.months.js',
+		'dependencies' => 'mediawiki.language',
+		'messages' => array_merge(
+			Language::$mMonthMsgs,
+			Language::$mMonthGenMsgs,
+			Language::$mMonthAbbrevMsgs
+		)
+	),
+
 	'mediawiki.language.names' => array( 'class' => 'ResourceLoaderLanguageNamesModule' ),
+
+	/* Wikia change end */
 
 	/* MediaWiki Libs */
 
