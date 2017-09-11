@@ -244,15 +244,6 @@ class ThumbnailImage extends MediaTransformOutput {
 	 * Get a thumbnail object from a file and parameters.
 	 * If $path is set to null, the output file is treated as a source copy.
 	 * If $path is set to false, no output file will be created.
-<<<<<<< HEAD
-	 *
-	 * @param File $file File object
-	 * @param string $url URL path to the thumb
-	 * @param int $width File's width
-	 * @param int $height File's height
-	 * @param string|bool|null $path Filesystem path to the thumb
-	 * @param int|bool $page Page number, for multi-page files
-=======
 	 * $parameters should include, as a minimum, (file) 'width' and 'height'.
 	 * It may also include a 'page' parameter for multipage files.
 	 *
@@ -261,7 +252,6 @@ class ThumbnailImage extends MediaTransformOutput {
 	 * @param $path String|bool|null: filesystem path to the thumb
 	 * @param $parameters Array: Associative array of parameters
 	 * @private
->>>>>>> upstream/REL1_20
 	 */
 	function __construct( $file, $url, $path = false, $parameters = array() ) {
 		# Previous parameters:
@@ -284,15 +274,13 @@ class ThumbnailImage extends MediaTransformOutput {
 		}
 
 		$this->file = $file;
-		$this->url = $url;
-<<<<<<< HEAD
+
 		# start wikia change
 		$timestamp = !empty( $file ) ? $file->getTimestamp() : false;
 		$this->url = wfReplaceImageServer( $this->url, $timestamp );
 		# end wikia change
-=======
+
 		$this->path = $path;
->>>>>>> upstream/REL1_20
 
 		# These should be integers when they get here.
 		# If not, there's a bug somewhere.  But let's at
