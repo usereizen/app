@@ -72,7 +72,7 @@ abstract class ResourceLoaderWikiModule extends ResourceLoaderModule {
 	 * @param $options array Extra options for subclasses
 	 * @return null|string
 	 */
-	protected function getContent( $title ) {
+	protected function getContent( $title, $titleText, $options = [] ) {
 		if ( !$title->isCssJsSubpage() && !$title->isCssOrJsPage() ) {
 			return null;
 		}

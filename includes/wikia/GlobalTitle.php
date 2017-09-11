@@ -302,9 +302,10 @@ class GlobalTitle extends Title {
 	 * @param string|array $query an optional query string
 	 * @param string|bool $variant language variant of url (for sr, zh..)
 	 *
+	 * @param Protocol|string $protocol
 	 * @return string the URL
 	 */
-	public function getFullURL( $query = '', $variant = false ) {
+	public function getFullURL( $query = '', $variant = false, $protocol = PROTO_RELATIVE ) {
 
 		$this->loadAll();
 		$namespace = wfUrlencode( $this->getNsText() );
