@@ -594,7 +594,8 @@ class FileRepo {
 	 * @param $levels
 	 * @return string
 	 */
-	protected static function getHashPathForLevel( $name, $levels ) {
+	// Wikia change - make this method public
+	public static function getHashPathForLevel( $name, $levels ) {
 		if ( $levels == 0 ) {
 			return '';
 		} else {

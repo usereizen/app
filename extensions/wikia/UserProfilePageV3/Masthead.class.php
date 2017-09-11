@@ -20,11 +20,6 @@ class Masthead {
 	public $mUser = false;
 
 	/**
-	 * city_id for messaging.wikia.com, will be used for creating image urls
-	 */
-	private $mMsgCityId = 4036;
-
-	/**
 	 * avatars from mediawiki message
 	 *
 	 * @var array $mDefaultAvatars
