@@ -617,7 +617,7 @@ class SpecialPage {
 		 * @param $special SpecialPage
 		 * @param $subPage string|null
 		 */
-		wfRunHooks( 'SpecialPageBeforeExecute', array( $this, $subPage ) );
+		Hooks::run( 'SpecialPageBeforeExecute', [ $this, $subPage ] );
 
 		$this->beforeExecute( $subPage );
 		$this->execute( $subPage );
@@ -631,7 +631,7 @@ class SpecialPage {
 		 * @param $special SpecialPage
 		 * @param $subPage string|null
 		 */
-		wfRunHooks( 'SpecialPageAfterExecute', array( $this, $subPage ) );
+		Hooks::run( 'SpecialPageAfterExecute', [ $this, $subPage ] );
 	}
 
 	/**
@@ -1235,7 +1235,7 @@ abstract class RedirectSpecialArticle extends RedirectSpecialPage {
 			'ctype', 'maxage', 'smaxage',
 		);
 
-		wfRunHooks( "RedirectSpecialArticleRedirectParams", array(&$redirectParams) );
+		Hooks::run( "RedirectSpecialArticleRedirectParams", [ &$redirectParams ] );
 		$this->mAllowedRedirectParams = $redirectParams;
 	}
 }

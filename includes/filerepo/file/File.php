@@ -979,7 +979,7 @@ abstract class File implements UrlGeneratorInterface {
 					$thumb = $this->transformErrorOutput( $thumbPath, $thumbUrl, $params, $flags );
 				}
 				// Give extensions a chance to do something with this thumbnail...
-				wfRunHooks( 'FileTransformed', array( $this, $thumb, $tmpThumbPath, $thumbPath ) );
+				Hooks::run( 'FileTransformed', [ $this, $thumb, $tmpThumbPath, $thumbPath ] );
 			}
 
 			// Purge. Useful in the event of Core -> Squid connection failure or squid

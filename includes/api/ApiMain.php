@@ -376,7 +376,7 @@ class ApiMain extends ApiBase {
 			$this->executeAction();
 		} catch ( Exception $e ) {
 			// Allow extra cleanup and logging
-			wfRunHooks( 'ApiMain::onException', array( $this, $e ) );
+			Hooks::run( 'ApiMain::onException', [ $this, $e ] );
 
 			// Log it
 			if ( !( $e instanceof UsageException ) ) {
@@ -790,7 +790,7 @@ class ApiMain extends ApiBase {
 
 		// Allow extensions to stop execution for arbitrary reasons.
 		$message = false;
-		if( !wfRunHooks( 'ApiCheckCanExecute', array( $module, $user, &$message ) ) ) {
+		if ( !Hooks::run( 'ApiCheckCanExecute', [ $module, $user, &$message ] ) ) {
 			$this->dieUsageMsg( $message );
 		}
 	}

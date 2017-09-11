@@ -626,7 +626,8 @@ abstract class ApiBase extends ContextSource {
 	 */
 	public function getFinalResultProperties() {
 		$properties = $this->getResultProperties();
-		wfRunHooks( 'APIGetResultProperties', array( $this, &$properties ) );
+		Hooks::run( 'APIGetResultProperties', [ $this, &$properties ] );
+
 		return $properties;
 	}
 

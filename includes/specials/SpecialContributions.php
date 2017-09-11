@@ -635,7 +635,7 @@ class ContribsPager extends ReverseChronologicalPager {
 		 * $descending: see phpdoc above
 		 */
 		$data = array( $this->mDb->select( $tables, $fields, $conds, $fname, $options, $join_conds ) );
-		wfRunHooks( 'ContribsPager::reallyDoQuery', array( &$data, $pager, $offset, $limit, $descending ) );
+		Hooks::run( 'ContribsPager::reallyDoQuery', [ &$data, $pager, $offset, $limit, $descending ] );
 
 		$result = array();
 

@@ -1410,7 +1410,7 @@ class Linker {
 		$auto = $match[2];
 		$post = $match[3];
 		$comment = null;
-		wfRunHooks( 'FormatAutocomments', array( &$comment, $pre, $auto, $post, $title, $local ) );
+		Hooks::run( 'FormatAutocomments', [ &$comment, $pre, $auto, $post, $title, $local ] );
 		if ( $comment === null ) {
 			$link = '';
 			if ( $title ) {

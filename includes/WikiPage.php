@@ -2197,7 +2197,7 @@ class WikiPage extends Page implements IDBAccessObject {
 		}
 
 		$user = is_null( $user ) ? $wgUser : $user;
-		if ( ! wfRunHooks( 'ArticleDelete', array( &$this, &$user, &$reason, &$error, &$status ) ) ) {
+		if ( !Hooks::run( 'ArticleDelete', [ $this, &$user, &$reason, &$error, &$status ] ) ) {
 			if ( $status->isOK() ) {
 				// Hook aborted but didn't set a fatal status
 				$status->fatal( 'delete-hook-aborted' );

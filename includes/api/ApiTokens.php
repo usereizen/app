@@ -73,7 +73,9 @@ class ApiTokens extends ApiBase {
 		foreach ( $names as $name ) {
 			$types[$name] = 'ApiQueryInfo::get' . ucfirst( $name ) . 'Token';
 		}
-		wfRunHooks( 'ApiTokensGetTokenTypes', array( &$types ) );
+
+		Hooks::run( 'ApiTokensGetTokenTypes', [ &$types ] );
+
 		ksort( $types );
 		wfProfileOut( __METHOD__ );
 		return $types;
