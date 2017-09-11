@@ -72,7 +72,7 @@ abstract class ResourceLoaderWikiModule extends ResourceLoaderModule {
 	 * @param $options array Extra options for subclasses
 	 * @return null|string
 	 */
-	protected function getContent( $title, $titleText, $options = [] ) {
+	protected function getContent( $title ) {
 		if ( !$title->isCssJsSubpage() && !$title->isCssOrJsPage() ) {
 			return null;
 		}
@@ -152,7 +152,8 @@ abstract class ResourceLoaderWikiModule extends ResourceLoaderModule {
 				$styles[$media] = array();
 			}
 			if ( strpos( $titleText, '*/' ) === false ) {
-				$styles[$media] .=  "/* " . $this->getResourceName($title,$titleText,$options) . " */\n";
+				$resourceName = $this->getResourceName( $title, $titleText, $options );
+				$style =  "/* $resourceName */\n" . $style;
 			}
 			$styles[$media][] = $style;
 		}
